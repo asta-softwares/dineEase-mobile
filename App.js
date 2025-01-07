@@ -55,6 +55,9 @@ const App = () => {
   const clearUser = useUserStore(state => state.clearUser);
   const user = useUserStore(state => state.user);
 
+  const stripePublishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+  const merchantIdentifier = process.env.EXPO_PUBLIC_MERCHANT_IDENTIFIER;
+
   useEffect(() => {
     const initApp = async () => {
       try {
@@ -125,8 +128,8 @@ const App = () => {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SystemBars style="auto" />
       <StripeProvider
-        publishableKey={STRIPE_PUBLISHABLE_KEY}
-        merchantIdentifier={MERCHANT_IDENTIFIER}
+        publishableKey={stripePublishableKey}
+        merchantIdentifier={merchantIdentifier}
       >
         <CartProvider>
           <NavigationContainer>
