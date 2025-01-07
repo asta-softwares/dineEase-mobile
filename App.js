@@ -32,7 +32,7 @@ import { useUserStore } from './stores/userStore';
 import { STRIPE_PUBLISHABLE_KEY, MERCHANT_IDENTIFIER } from '@env';
 import { setupNotificationListeners, registerForPushNotificationsAsync } from './utils/notificationService';
 import authService from './api/services/authService';
-
+import SearchScreen from './app/Search';
 // Initialize reanimated
 import 'react-native-reanimated';
 
@@ -179,6 +179,7 @@ const App = () => {
                   headerBackVisible: false
                 }}
               />
+              <Stack.Screen name="Search" component={SearchScreen} />
               <Stack.Screen name="Details" component={DetailScreen} />
               <Stack.Screen name="Checkout" component={CheckoutScreen} />
               <Stack.Screen name="Profile" component={ProfileScreen} />

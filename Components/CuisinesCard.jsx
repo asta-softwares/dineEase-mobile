@@ -50,20 +50,20 @@ CuisinesCard.propTypes = {
 
 const styles = StyleSheet.create({
   touchable: {
-    width: 90,
+    width: 60,
   },
   card: {
-    width: 90,
-    minHeight: 115,
+    width: 60,
+    minHeight: 85,
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     padding: 0,
     gap: 4,
   },
   imageContainer: {
-    width: 90,
-    height: 90,
+    width: 50,
+    height: 50,
     borderRadius: 45,
     overflow: 'hidden',
   },
@@ -78,9 +78,9 @@ const styles = StyleSheet.create({
     borderRadius: 45,
   },
   textContainer: {
-    width: 90,
+    width: 60,
     minHeight: 25,
-    paddingVertical: 4,
+    paddingVertical: 2,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

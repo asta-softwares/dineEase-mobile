@@ -47,7 +47,7 @@ const RestaurantCard = ({
             style={styles.rating}
           >
             <Ionicons name="star" size={14} color={colors.white} />
-            <Text style={[typography.labelMedium, styles.ratingText]}>{rating}</Text>
+            <Text style={[typography.labelMh3edium, styles.ratingText]}>{rating}</Text>
           </LinearGradient>
           {firstPromo && (
             <View style={styles.promosContainer}>
@@ -83,7 +83,7 @@ const RestaurantCard = ({
         </View>
         <View style={styles.restaurantInfo}>
           <View style={styles.nameAndPriceContainer}>
-            <Text style={[typography.labelLarge, styles.restaurantName]} numberOfLines={1}>{name}</Text>
+            <Text style={[typography.h3, styles.restaurantName]} numberOfLines={1}>{name}</Text>
             {price && (
               <Text style={[typography.bodyMedium, styles.restaurantPrice]}>{price}</Text>
             )}

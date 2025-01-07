@@ -16,7 +16,7 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
-  ImageBackground
+  ImageBackground,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useNavigationState } from "@react-navigation/native";
@@ -47,37 +47,25 @@ export default function HomeScreen({ navigation }) {
   const [restaurants, setRestaurants] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
   const { user } = useUserStore();
   const [locationPermission, setLocationPermission] = useState(null);
 
-  const searchHeight = scrollY.interpolate({
-    inputRange: [0, 50, 100],
-    outputRange: [50, 25, 0],
+  const [nextPage, setNextPage] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+
+  const headerHeight = scrollY.interpolate({
+    inputRange: [0, 25, 50],
+    outputRange: [Platform.OS === 'ios' ? 40 : 40, Platform.OS === 'ios' ? 25 : 20, 0],
     extrapolate: 'clamp',
     useNativeDriver: true,
   });
 
-  const searchOpacity = scrollY.interpolate({
-    inputRange: [0, 50, 100],
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 25, 50],
     outputRange: [1, 0.5, 0],
-    extrapolate: 'clamp',
-    useNativeDriver: true,
-  });
-
-  const searchMargin = scrollY.interpolate({
-    inputRange: [0, 50, 100],
-    outputRange: [16, 8, 0],
-    extrapolate: 'clamp',
-    useNativeDriver: true,
-  });
-
-  const serviceTypeMargin = scrollY.interpolate({
-    inputRange: [0, 50, 100],
-    outputRange: [Platform.OS === 'ios' ? 120 : 70, Platform.OS === 'ios' ? 60 : 35, 0],
     extrapolate: 'clamp',
     useNativeDriver: true,
   });
@@ -89,16 +77,23 @@ export default function HomeScreen({ navigation }) {
     });
   };
 
-  const fetchRestaurants = async (filters = {}) => {
+  const fetchRestaurants = async (filters = {}, page = 1) => {
     try {
       setLoading(true);
       const serviceType = isDineIn ? 'dine-in' : 'takeout';
       const response = await restaurantService.getRestaurantsByFilter({
         serviceType,
         categoryId: filters.categoryId,
-        searchQuery: filters.searchQuery
-      });
-      setRestaurants(response);
+      }, page);
+
+      if (page === 1) {
+        setRestaurants(response?.results || []);
+      } else {
+        setRestaurants(prev => [...prev, ...(response?.results || [])]);
+      }
+      
+      setNextPage(response?.next);
+      setHasMore(!!response?.next);
     } catch (error) {
       console.error('Error fetching restaurants:', error);
       Alert.alert(
@@ -110,23 +105,52 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  const fetchCategories = async () => {
+  const loadMore = async () => {
+    if (!hasMore || loading) return;
+    
     try {
-      const allCategories = await restaurantService.getRestaurantsCategory();
-      setCategories(allCategories);
+      const nextPageNumber = nextPage ? parseInt(new URL(nextPage).searchParams.get('page')) : null;
+      if (nextPageNumber) {
+        await fetchRestaurants({
+          categoryId: selectedCategory,
+        }, nextPageNumber);
+      }
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error('Error loading more restaurants:', error);
+    }
+  };
+
+  const handleCategoryPress = async (category) => {
+    try {
+      if (selectedCategory === category.id) {
+        setSelectedCategory(null);
+        setNextPage(null);
+        setHasMore(true);
+        fetchRestaurants({}, 1);
+      } else {
+        setSelectedCategory(category.id);
+        setNextPage(null);
+        setHasMore(true);
+        fetchRestaurants({ categoryId: category.id }, 1);
+      }
+    } catch (error) {
+      console.error('Error handling category press:', error);
+      Alert.alert(
+        'Error',
+        'Failed to filter restaurants. Please try again.'
+      );
     }
   };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    setNextPage(null);
+    setHasMore(true);
     try {
       await Promise.all([
         fetchRestaurants({
           categoryId: selectedCategory,
-          searchQuery: searchQuery
-        }),
+        }, 1),
         fetchCategories()
       ]);
     } catch (error) {
@@ -138,7 +162,16 @@ export default function HomeScreen({ navigation }) {
     } finally {
       setRefreshing(false);
     }
-  }, [isDineIn, selectedCategory, searchQuery]);
+  }, [isDineIn, selectedCategory]);
+
+  const fetchCategories = async () => {
+    try {
+      const allCategories = await restaurantService.getRestaurantsCategory();
+      setCategories(allCategories);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -156,49 +189,6 @@ export default function HomeScreen({ navigation }) {
     fetchRestaurants();
   }, [isDineIn]); // Refetch when service type changes
 
-
-  const handleCategoryPress = async (category) => {
-    try {
-      if (selectedCategory === category.id) {
-        setSelectedCategory(null);
-        fetchRestaurants();
-      } else {
-        setSelectedCategory(category.id);
-        fetchRestaurants({ categoryId: category.id });
-      }
-    } catch (error) {
-      console.error('Error handling category press:', error);
-      Alert.alert(
-        'Error',
-        'Failed to filter restaurants. Please try again.'
-      );
-    }
-  };
-
-
-  const handleProfilePress = async () => {
-    const user = useUserStore.getState().user;
-    if (user) {
-      navigation.navigate('Profile');
-    } else {
-      navigation.navigate('Login');
-    }
-  };
-
-  const handleSearch = (text) => {
-    setSearchQuery(text);
-    setIsSearching(!!text);
-    fetchRestaurants({ 
-      categoryId: selectedCategory,
-      searchQuery: text 
-    });
-  };
-
-  const handleClearSearch = () => {
-    setSearchQuery('');
-    setIsSearching(false);
-    fetchRestaurants({ categoryId: selectedCategory });
-  };
 
   useEffect(() => {
     // Prevent going back to login only on Home screen
@@ -295,92 +285,56 @@ export default function HomeScreen({ navigation }) {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar
         animated={true}
-        barStyle="light-content"
+        barStyle="dark-content"
         translucent 
         backgroundColor="transparent"
       />
       <View style={styles.container}>
-
-          <ImageBackground 
-            source={require('../assets/new_year_header_bg.png')}
-            style={styles.header}
-            resizeMode="cover"
-          >
-         <SafeAreaView >
-            <View style={styles.topHeader}>
-              <TouchableOpacity style={styles.menuButton} onPress={handleProfilePress}>
-                <Ionicons name="person-outline" size={24} color={colors.text.white} />
-              </TouchableOpacity>
+         <SafeAreaView style={styles.header} >
+            <Animated.View style={[
+              styles.topHeader,
+              {
+                height: headerHeight,
+                opacity: headerOpacity,
+                overflow: 'hidden'
+              }
+            ]}>
+             
               <View style={styles.logoContainer}>
                 <Image
-                  source={require("../assets/logo.png")}
+                  source={require("../assets/logo-and-text-orange.png")}
                   style={styles.logo}
                 />
               </View>
               <TouchableOpacity 
                 onPress={() => user && navigation.navigate('OrdersScreen')}
-                style={{ opacity: user ? 1 : 0 }}
+               
               >
-                <Ionicons name="receipt-outline" size={24} color={colors.text.white} />
+                <Ionicons name="bag-outline" size={24} color={colors.text.black}  opacity={user ? 1 : 0}/>
+              </TouchableOpacity>
+            </Animated.View>
+
+            <View style={styles.searchContainer}>
+              <TouchableOpacity 
+                style={styles.searchInputContainer}
+                onPress={() => navigation.navigate('Search', { isDineIn })}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.searchPlaceholder}>
+                  What are you craving?
+                </Text>
+                <Ionicons name="search" size={20} color={colors.text.secondary} style={{ marginRight: layout.spacing.md }} />
               </TouchableOpacity>
             </View>
 
-            <Animated.View
-              style={[
-                styles.searchContainer,
-                {
-                  height: searchHeight,
-                  opacity: searchOpacity,
-                  marginBottom: searchMargin,
-                },
-              ]}
-            >
-              <View style={styles.searchInputContainer}>
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Search Restaurant, Cuisine, Location..."
-                  placeholderTextColor={colors.text.secondary}
-                  value={searchQuery}
-                  onChangeText={handleSearch}
-                />
-                {searchQuery ? (
-                  <TouchableOpacity 
-                    style={styles.clearButton} 
-                    onPress={handleClearSearch}
-                  >
-                    <Ionicons name="close-circle" size={20} color={colors.text.secondary} />
-                  </TouchableOpacity>
-                ) : (
-                  <Ionicons name="search" size={20} color={colors.text.secondary} />
-                )}
-              </View>
-              <Image 
-                source={require('../assets/new_year_text.png')} 
-                style={styles.centerHeaderImg}
-                resizeMode="contain"
-              />
-            </Animated.View>
-
-            <Image 
-              source={require('../assets/new_year_text.png')} 
-              style={styles.leftHeaderImg}
-              resizeMode="contain"
-            />
-
-            <Image 
-              source={require('../assets/meal.png')} 
-              style={styles.rightHeaderImg}
-              resizeMode="contain"
-            />
-
-            <Animated.View
-              style={[
-                styles.serviceTypeContainer,
-                {
-                  marginTop: serviceTypeMargin,
-                }
-              ]}
-            >
+            <Animated.View style={[
+              styles.serviceTypeContainer,
+              {
+                height: headerHeight,
+                opacity: headerOpacity,
+                overflow: 'hidden'
+              }
+            ]}>
               <TouchableOpacity
                 style={[
                   styles.switchButton,
@@ -405,12 +359,12 @@ export default function HomeScreen({ navigation }) {
               </TouchableOpacity>
             </Animated.View>
             </SafeAreaView>
-          </ImageBackground>
+
        
 
         <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          style={[styles.scrollView, { minHeight: '100%' }]}
+          contentContainerStyle={[styles.scrollContent, { flexGrow: 1 }]}
           showsVerticalScrollIndicator={false}
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -425,10 +379,18 @@ export default function HomeScreen({ navigation }) {
               colors={[colors.primary]}
             />
           }
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
         >
           <View style={styles.scrollContent}>
             {!isSearching && (
               <>
+                <View style={styles.promoBanner}>
+                  <Image
+                    source={require('../assets/promo-banner.png')}
+                    style={styles.promoImage}
+                  />
+                </View>
                 <Text style={[{
                   fontFamily: 'PlusJakartaSans-Bold',
                   fontSize: 20,
@@ -436,7 +398,7 @@ export default function HomeScreen({ navigation }) {
                   marginHorizontal: layout.spacing.md,
                   marginBottom: layout.spacing.sm
                 }]}>
-                  EXPLORE CRAVINGS
+                  Explore Cuisines
                 </Text>
                 <ScrollView
                   horizontal
@@ -494,6 +456,8 @@ export default function HomeScreen({ navigation }) {
                 </Text>
               )}
             </View>
+           
+          
           </View>
         </ScrollView>
       </View>
@@ -508,81 +472,57 @@ const styles = StyleSheet.create({
   },
   header: {
     zIndex: 1,
-    paddingHorizontal: layout.spacing.md,
     paddingTop: Platform.OS === 'android' ? 50 : 0,
-    paddingBottom: 16,
-    overflow: 'hidden'
+    overflow: 'hidden',
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   topHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    paddingHorizontal: layout.getResponsiveSpacing(layout.spacing.xxl),
+    marginHorizontal: -layout.spacing.md,
+    marginBottom: Platform.OS === 'ios' ? 8 : 8,
+    marginTop: Platform.OS === 'ios' ? 8 : 8,
+    zIndex: 2,
   },
   logoContainer: {
     alignItems: 'center',
   },
   logo: {
-    width: 40,
-    height: 40,
+    width: 130,
+    height: 130,
     resizeMode: 'contain',
   },
   searchContainer: {
     position: 'relative',
-    marginBottom: 8,
     zIndex: 2,
+    paddingHorizontal: layout.spacing.md,
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.light,
     borderRadius: layout.card.borderRadius,
-    paddingHorizontal: layout.spacing.sm,
-    zIndex: 2,
+    height: 50,
   },
-  searchInput: {
+  searchPlaceholder: {
     flex: 1,
-    height: 40,
-    paddingHorizontal: layout.spacing.sm,
-    paddingVertical: layout.spacing.xs,
+    paddingHorizontal: layout.spacing.md,
     fontSize: 16,
     fontFamily: 'PlusJakartaSans-Regular',
-    color: colors.text.primary,
-  },
-  searchButton: {
-    padding: layout.spacing.xs,
-  },
-  centerHeaderImg: {
-    width: '80%',
-    height:100,
-    alignSelf: 'center',
-    marginTop: 0,
-    display: 'none',
-  },
-  leftHeaderImg: {
-    position: 'absolute',
-    left: 20,
-    top: 80,
-    width: 200,
-    height: 200,
-    zIndex: 1,
-    display: 'none',
-  },
-  rightHeaderImg: {
-    position: 'absolute',
-    right: -50,
-    top: 60,
-    width: 250,
-    height: 250,
-    zIndex: -1,
-    display: 'none',
+    color: colors.text.secondary,
   },
   serviceTypeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: layout.getResponsiveSpacing(layout.spacing.xxl),
     marginHorizontal: -layout.spacing.md,
-    marginBottom: 8,
+    marginBottom: Platform.OS === 'ios' ? 8 : 8,
+    marginTop: Platform.OS === 'ios' ? 8 : 8,
+  
     zIndex: 2,
   },
   switchButton: {
@@ -593,19 +533,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.text.white,
+    borderColor: colors.text.primary,
   },
   activeButton: {
-    backgroundColor: colors.text.white,
+    backgroundColor: colors.text.primary,
     borderWidth: 0,
   },
   switchText: {
     fontFamily: 'PlusJakartaSans-Medium',
     fontSize: 14,
-    color: colors.text.white,
+    color: colors.text.primary,
   },
   activeText: {
-    color: colors.primary,
+    color: colors.white,
   },
   cuisinesContainer: {
     paddingLeft: layout.spacing.md,
@@ -618,7 +558,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: layout.spacing.xl,
+    paddingBottom: Platform.OS === 'ios' ? 150 : 140,
     paddingTop: layout.spacing.sm,
   },
   restaurantsContainer: {
@@ -628,7 +568,19 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: layout.spacing.md,
   },
-  clearButton: {
-    padding: layout.spacing.xs,
-  }
+  promoBanner: {
+    width: '100%',
+    height: 150,
+    marginBottom: layout.spacing.md,
+    paddingHorizontal: layout.spacing.md,
+    
+  },
+  promoImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+    borderRadius: layout.card.borderRadius,
+    borderColor: colors.border,
+    borderWidth: 1,
+  },
 });
