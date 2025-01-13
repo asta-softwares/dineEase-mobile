@@ -22,7 +22,14 @@ const TopNav = ({
 }) => {
     if (variant === 'solid') {
         return (
-            <View style={[styles.topNavContainer, { backgroundColor: colors.background }]}>
+            <View style={[
+                styles.topNavContainer, 
+                { 
+                    backgroundColor: colors.background,
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border,
+                }
+            ]}>
                 <SafeAreaView edges={['top']} style={styles.safeArea}>
                     <View style={styles.topNav}>
                         {showBackButton && showBack ? (
@@ -146,7 +153,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         paddingHorizontal: layout.spacing.md,
-        paddingBottom: layout.spacing.sm,
+        paddingBottom: 16,
     },
     backButton: {
         borderRadius: 8,
