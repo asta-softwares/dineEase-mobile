@@ -127,7 +127,7 @@ export default function RegisterScreen({ navigation }) {
                   style={styles.logo}
                 />
                 <Text style={[typography.h1, { color: colors.text.black }]}>
-                 Register
+                 Sign up
                 </Text>
               </View>
 

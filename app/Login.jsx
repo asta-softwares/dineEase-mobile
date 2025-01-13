@@ -126,7 +126,7 @@ export default function LoginScreen({ navigation }) {
                   style={styles.logo}
                 />
                <Text style={[typography.h1, { color: colors.text.black }]}>
-                 Login
+                 Sign in
                 </Text>
               </View>
 
