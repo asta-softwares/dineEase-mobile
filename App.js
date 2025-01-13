@@ -61,9 +61,9 @@ function TabNavigator() {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
 
-          if (route.name === 'HomeTab') {
+          if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'OrdersTab') {
+          } else if (route.name === 'Orders') {
             iconName = focused ? 'receipt' : 'receipt-outline';
           } else if (route.name === 'ProfileTab') {
             iconName = focused ? 'person' : 'person-outline';
@@ -95,10 +95,10 @@ function TabNavigator() {
       })}
     >
       <Tab.Screen 
-        name="HomeTab" 
-        component={HomeScreen} 
-        options={{ 
-          tabBarLabel: 'Home',
+        name="Home" 
+        component={HomeScreen}
+        options={{
+          headerShown: false,
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons 
               name={focused ? "home" : "home-outline"} 
@@ -110,7 +110,7 @@ function TabNavigator() {
       />
       { user && (
       <Tab.Screen 
-        name="OrdersTab" 
+        name="Orders" 
         component={OrdersScreen} 
         options={{ 
           tabBarLabel: 'Orders',
@@ -228,7 +228,7 @@ export default function App() {
           <NavigationContainer>
             <Stack.Navigator
               screenOptions={{
-                headerShown: false,
+                headerShown: false
               }}
             >
               {!user ? (
@@ -236,17 +236,37 @@ export default function App() {
                   <Stack.Screen name="Landing" component={Landing} />
                   <Stack.Screen 
                     name="Login" 
-                    component={LoginScreen}  
+                    component={LoginScreen}
+                    options={{
+                      gestureEnabled: false
+                    }}
                   />
-                  <Stack.Screen name="Register" component={RegisterScreen} />
-                  <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
+                  <Stack.Screen 
+                    name="Register" 
+                    component={RegisterScreen}
+                    options={{
+                      gestureEnabled: false
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="VerifyEmail" 
+                    component={VerifyEmailScreen}
+                    options={{
+                      gestureEnabled: false
+                    }}
+                  />
                 </>
               ) : null}
-              <Stack.Screen name="Main" component={TabNavigator} />
+              <Stack.Screen 
+                name="Main" 
+                component={TabNavigator}
+                options={{
+                  gestureEnabled: false
+                }}
+              />
               <Stack.Screen 
                 name="Search" 
                 component={SearchScreen}
-
               />
               <Stack.Screen 
                 name="Details" 

@@ -61,24 +61,18 @@ export const restaurantService = {
     }
   },
 
-  searchRestaurants: async (query) => {
+  searchRestaurants: async (query, page = 1) => {
     try {
-      const response = await apiClient.get('/restaurants/search/', { 
-        params: { q: query } 
-      });
+      const params = new URLSearchParams();
+      params.append('search', query.query);
+      params.append('service_type', query.serviceType);
+      params.append('page', page);
+
+      const response = await apiClient.get(`/restaurants/?${params.toString()}`);
       return response.data;
     } catch (error) {
       const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.error ||
-                          error.response?.data?.detail ||
-                          error.message;
-      
-      console.error('Error searching restaurants:', {
-        status: error.response?.status,
-        message: errorMessage,
-        data: error.response?.data
-      });
-      
+        'Failed to search restaurants. Please try again.';
       throw new Error(errorMessage);
     }
   },
@@ -126,24 +120,15 @@ export const restaurantService = {
       throw new Error(errorMessage);
     }
   },
-
-  getRestaurantsByFilter: async ({ serviceType, categoryId, searchQuery }) => {
+  getRestaurantsByFilter: async ({ serviceType, categoryId, searchQuery }, page = 1) => {
     try {
-      const params = {};
-      
-      if (serviceType) {
-        params.service_type = serviceType;
-      }
-      
-      if (categoryId) {
-        params.categories = categoryId;
-      }
+      const params = new URLSearchParams();
+      params.append('service_type', serviceType);
+      if (categoryId) params.append('categories', categoryId);
+      if (searchQuery) params.append('search', searchQuery);
+      params.append('page', page);
 
-      if (searchQuery) {
-        params.name = searchQuery;
-      }
-
-      const response = await apiClient.get('/restaurants/', { params });
+      const response = await apiClient.get(`/restaurants/?${params.toString()}`);
       return response.data;
     } catch (error) {
       const errorMessage = error.response?.data?.message || 
@@ -318,6 +303,17 @@ export const restaurantService = {
         data: error.response?.data
       });
       
+      throw new Error(errorMessage);
+    }
+  },
+
+  getFeaturedRestaurants: async () => {
+    try {
+      const response = await apiClient.get('/featured-restaurants/');
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 
+        'Failed to fetch featured restaurants. Please try again.';
       throw new Error(errorMessage);
     }
   },

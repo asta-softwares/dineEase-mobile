@@ -24,6 +24,7 @@ import { useFonts } from 'expo-font';
 import { PlusJakartaSans_400Regular, PlusJakartaSans_500Medium, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold } from '@expo-google-fonts/plus-jakarta-sans';
 import CuisinesCard from "../Components/CuisinesCard";
 import RestaurantCard from "../Components/RestaurantCard";
+import FeatureCard from "../Components/FeatureCard"; // Import FeatureCard
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { layout } from '../styles/layout';
@@ -49,6 +50,7 @@ export default function HomeScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [featuredRestaurants, setFeaturedRestaurants] = useState([]); // Add featuredRestaurants state
   const scrollY = useRef(new Animated.Value(0)).current;
   const { user } = useUserStore();
   const [locationPermission, setLocationPermission] = useState(null);
@@ -151,7 +153,8 @@ export default function HomeScreen({ navigation }) {
         fetchRestaurants({
           categoryId: selectedCategory,
         }, 1),
-        fetchCategories()
+        fetchCategories(),
+        fetchFeaturedRestaurants()
       ]);
     } catch (error) {
       console.error('Error refreshing data:', error);
@@ -173,55 +176,79 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
+  const fetchFeaturedRestaurants = async () => {
+    try {
+      const response = await restaurantService.getFeaturedRestaurants();
+      if (response) {
+        setFeaturedRestaurants(response);
+      }
+    } catch (error) {
+      console.error('Error fetching featured restaurants:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchFeaturedRestaurants();
+  }, []);
+
+  // Categories useEffect
   useEffect(() => {
     const fetchData = async () => {
       try {
         await fetchCategories();
       } catch (error) {
         console.error('Error fetching initial data:', error);
+      } finally {
+        setLoading(false);
       }
     };
-
     fetchData();
-  }, []);
+  }, [isDineIn]);
 
+  // Restaurants useEffect
   useEffect(() => {
     fetchRestaurants();
   }, [isDineIn]); // Refetch when service type changes
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await Promise.all([
+          fetchCategories(),
+        ]);
+      } catch (error) {
+        console.error('Error fetching initial data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [isDineIn]);
 
   useEffect(() => {
-    // Prevent going back to login only on Home screen
     navigation.setOptions({
       headerLeft: () => null,
       gestureEnabled: false,
     });
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      // Get current route name
-      const currentRoute = navigation.getState().routes[navigation.getState().index];
-      
-      // Only handle back press if we're on the Home screen
-      if (currentRoute.name === 'Home') {
-        Alert.alert(
-          'Exit App',
-          'Do you want to exit the app?',
-          [
-            {
-              text: 'Cancel',
-              onPress: () => null,
-              style: 'cancel',
-            },
-            {
-              text: 'Exit',
-              onPress: () => BackHandler.exitApp(),
-            },
-          ],
-          { cancelable: false }
-        );
-        return true; // Prevent default behavior
-      }
-      return false; // Allow default back behavior on other screens
+      Alert.alert(
+        'Exit App',
+        'Do you want to exit the app?',
+        [
+          {
+            text: 'Cancel',
+            onPress: () => null,
+            style: 'cancel',
+          },
+          {
+            text: 'Exit',
+            onPress: () => BackHandler.exitApp(),
+          },
+        ],
+        { cancelable: false }
+      );
+      return true; // Prevent default behavior
     });
 
     return () => backHandler.remove();
@@ -418,46 +445,71 @@ export default function HomeScreen({ navigation }) {
                     </View>
                   ))}
                 </ScrollView>
+                <Text style={[{
+                  fontFamily: 'PlusJakartaSans-Bold',
+                  fontSize: 20,
+                  color: colors.text.primary,
+                  marginHorizontal: layout.spacing.md,
+                  marginBottom: layout.spacing.sm
+                }]}>
+                  Featured
+                </Text>
+                {featuredRestaurants.length > 0 && featuredRestaurants.map(group => (
+                  <View key={group.group} style={styles.featuredSection}>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.featuredScrollContent}
+                    >
+                      {group.restaurants.slice(0, 4).map((restaurant) => (
+                        <FeatureCard
+                          key={restaurant.id}
+                          restaurant={restaurant}
+                          onPress={() => handleDetail(restaurant)}
+                          disabled={!restaurant.is_open}
+                        />
+                      ))}
+                    </ScrollView>
+                  </View>
+                ))}
+                <Text style={[{
+                  fontFamily: 'PlusJakartaSans-Bold',
+                  fontSize: 20,
+                  color: colors.text.primary,
+                  marginHorizontal: layout.spacing.md,
+                  marginBottom: layout.spacing.sm
+                }]}>
+                  {restaurants.length} restaurants to explore
+                </Text>
+                <View style={styles.restaurantsContainer}>
+                  {loading ? (
+                    <ActivityIndicator size="large" color={colors.primary} />
+                  ) : restaurants.length > 0 ? (
+                    restaurants.map((restaurant) => (
+                      <TouchableOpacity 
+                        key={restaurant.id} 
+                        onPress={() => restaurant.is_open && handleDetail(restaurant)}
+                        disabled={!restaurant.is_open}
+                        style={styles.restaurantCardWrapper}
+                      >
+                        <RestaurantCard
+                          name={restaurant.name}
+                          rating={restaurant.ratings}
+                          address={restaurant.location}
+                          imageUrl={restaurant.image}
+                          promos={restaurant.promos}
+                          isOpen={restaurant.is_open}
+                        />
+                      </TouchableOpacity>
+                    ))
+                  ) : (
+                    <Text style={[typography.bodyLarge, { textAlign: 'center', marginTop: 20 }]}>
+                      No restaurants found
+                    </Text>
+                  )}
+                </View>
               </>
             )}
-            <Text style={[{
-              fontFamily: 'PlusJakartaSans-Bold',
-              fontSize: 20,
-              color: colors.text.primary,
-              marginHorizontal: layout.spacing.md,
-              marginBottom: layout.spacing.sm
-            }]}>
-              {restaurants.length} restaurants to explore
-            </Text>
-            <View style={styles.restaurantsContainer}>
-              {loading ? (
-                <ActivityIndicator size="large" color={colors.primary} />
-              ) : restaurants.length > 0 ? (
-                restaurants.map((restaurant) => (
-                  <TouchableOpacity 
-                    key={restaurant.id} 
-                    onPress={() => restaurant.is_open && handleDetail(restaurant)}
-                    disabled={!restaurant.is_open}
-                    style={styles.restaurantCardWrapper}
-                  >
-                    <RestaurantCard
-                      name={restaurant.name}
-                      rating={restaurant.ratings}
-                      address={restaurant.location}
-                      imageUrl={restaurant.image}
-                      promos={restaurant.promos}
-                      isOpen={restaurant.is_open}
-                    />
-                  </TouchableOpacity>
-                ))
-              ) : (
-                <Text style={[typography.bodyLarge, { textAlign: 'center', marginTop: 20 }]}>
-                  No restaurants found
-                </Text>
-              )}
-            </View>
-           
-          
           </View>
         </ScrollView>
       </View>
@@ -582,5 +634,16 @@ const styles = StyleSheet.create({
     borderRadius: layout.card.borderRadius,
     borderColor: colors.border,
     borderWidth: 1,
+  },
+  featuredSection: {
+    marginBottom: layout.spacing.lg,
+  },
+  sectionTitle: {
+    ...typography.h2,
+    marginBottom: layout.spacing.sm,
+    marginHorizontal: layout.spacing.md,
+  },
+  featuredScrollContent: {
+    paddingHorizontal: layout.spacing.md,
   },
 });
