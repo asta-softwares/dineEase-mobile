@@ -40,15 +40,21 @@ const RestaurantCard = ({
       <View style={styles.restaurantCard}>
         <View style={styles.imageContainer}>
           <Image source={{ uri: imageUrl }} style={styles.restaurantImage} />
-          <LinearGradient
-            colors={colors.gradients.rating}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.rating}
-          >
-            <Ionicons name="star" size={14} color={colors.white} />
-            <Text style={[typography.labelMh3edium, styles.ratingText]}>{rating}</Text>
-          </LinearGradient>
+          {!isOpen ? (
+            <View style={styles.closedBadge}>
+              <Text style={styles.closedText}>Closed</Text>
+            </View>
+          ) : rating ? (
+            <LinearGradient
+              colors={colors.gradients.rating}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.rating}
+            >
+              <Ionicons name="star" size={14} color={colors.white} />
+              <Text style={[typography.labelMedium, styles.ratingText]}>{rating}</Text>
+            </LinearGradient>
+          ) : null}
           {firstPromo && (
             <View style={styles.promosContainer}>
               <LinearGradient
@@ -99,13 +105,13 @@ const RestaurantCard = ({
 
 RestaurantCard.propTypes = {
   name: PropTypes.string.isRequired,
-  rating: PropTypes.number.isRequired,
+  rating: PropTypes.number,
   address: PropTypes.string.isRequired,
   imageUrl: PropTypes.string.isRequired,
   price: PropTypes.string,
   promos: PropTypes.array,
   style: PropTypes.object,
-  isOpen: PropTypes.bool
+  isOpen: PropTypes.bool,
 };
 
 const styles = StyleSheet.create({
@@ -114,7 +120,7 @@ const styles = StyleSheet.create({
     marginBottom: layout.spacing.md,
   },
   closedRestaurant: {
-    opacity: 0.5
+    opacity: 0.6,
   },
   restaurantCard: {
     backgroundColor: colors.background,
@@ -142,8 +148,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
+  closedBadge: {
+    position: 'absolute',
+    top: layout.spacing.sm,
+    right: layout.spacing.sm,
+    backgroundColor: colors.error,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  closedText: {
+    ...typography.caption,
+    color: colors.white,
+  },
   ratingText: {
-    color: colors.text.white,
+    color: colors.white,
+    marginLeft: 4,
   },
   promosContainer: {
     position: 'absolute',

@@ -3,6 +3,7 @@ import React from 'react';
 import { Image, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
+import { layout } from '../styles/layout';
 
 const CuisinesCard = ({ name, imageUrl, description, onPress, isSelected }) => {
   return (
@@ -50,36 +51,36 @@ CuisinesCard.propTypes = {
 
 const styles = StyleSheet.create({
   touchable: {
-    width: 60,
+    width: 90,
   },
   card: {
-    width: 60,
-    minHeight: 85,
+    width: 90,
+    minHeight: 110,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     padding: 0,
-    gap: 4,
+    gap: layout.spacing.xs,
   },
   imageContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 45,
+    width: 80,
+    height: 80,
+    borderRadius: 10,
     overflow: 'hidden',
   },
   selectedImageContainer: {
-    borderWidth: 5,
+    borderWidth: 3,
     borderColor: colors.primary,
-    borderRadius: 45,
+    borderRadius: 12,
   },
   image: {
     width: '100%',
     height: '100%',
-    borderRadius: 45,
+    borderRadius: 10,
   },
   textContainer: {
-    width: 60,
-    minHeight: 25,
+    width: 90,
+    minHeight: 32,
     paddingVertical: 2,
     display: 'flex',
     alignItems: 'center',
