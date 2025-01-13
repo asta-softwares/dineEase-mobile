@@ -1,5 +1,6 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
   useFonts,
   PlusJakartaSans_400Regular,
@@ -10,7 +11,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, Platform } from 'react-native';
 import { enableScreens } from 'react-native-screens';
 import { SystemBars } from 'react-native-edge-to-edge';
 import * as Notifications from 'expo-notifications';
@@ -33,12 +34,15 @@ import { STRIPE_PUBLISHABLE_KEY, MERCHANT_IDENTIFIER } from '@env';
 import { setupNotificationListeners, registerForPushNotificationsAsync } from './utils/notificationService';
 import authService from './api/services/authService';
 import SearchScreen from './app/Search';
+import MenuDetailsScreen from './Components/MenuDetails';
+import { Ionicons } from '@expo/vector-icons';
 // Initialize reanimated
 import 'react-native-reanimated';
 
 enableScreens();
 
 const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
 // Configure notification handler
 Notifications.setNotificationHandler({
@@ -49,7 +53,96 @@ Notifications.setNotificationHandler({
   }),
 });
 
-const App = () => {
+function TabNavigator() {
+  const { user } = useUserStore();
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          if (route.name === 'HomeTab') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'OrdersTab') {
+            iconName = focused ? 'receipt' : 'receipt-outline';
+          } else if (route.name === 'ProfileTab') {
+            iconName = focused ? 'person' : 'person-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.text.secondary,
+        headerShown: false,
+        tabBarStyle: {
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          height: Platform.OS === 'ios' ? 85 : 70,
+          paddingBottom: Platform.OS === 'ios' ? 25 : 12,
+          paddingTop: 8,
+          backgroundColor: colors.white,
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        tabBarLabelStyle: {
+          fontFamily: 'PlusJakartaSans-Medium',
+          fontSize: 12,
+        },
+      })}
+    >
+      <Tab.Screen 
+        name="HomeTab" 
+        component={HomeScreen} 
+        options={{ 
+          tabBarLabel: 'Home',
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons 
+              name={focused ? "home" : "home-outline"} 
+              size={size} 
+              color={color} 
+            />
+          ),
+        }}
+      />
+      { user && (
+      <Tab.Screen 
+        name="OrdersTab" 
+        component={OrdersScreen} 
+        options={{ 
+          tabBarLabel: 'Orders',
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons 
+              name={focused ? "receipt" : "receipt-outline"} 
+              size={size} 
+              color={color} 
+            />
+          ),
+        }}
+      />
+      )}
+      <Tab.Screen 
+        name="ProfileTab" 
+        component={ProfileScreen} 
+        options={{ 
+          tabBarLabel: 'Profile',
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons 
+              name={focused ? "person" : "person-outline"} 
+              size={size} 
+              color={color} 
+            />
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const initializeAuth = useUserStore(state => state.initializeAuth);
   const clearUser = useUserStore(state => state.clearUser);
@@ -137,61 +230,54 @@ const App = () => {
               screenOptions={{
                 headerShown: false,
               }}
-              initialRouteName={user ? "Home" : "Landing"}
             >
+              {!user ? (
+                <>
+                  <Stack.Screen name="Landing" component={Landing} />
+                  <Stack.Screen 
+                    name="Login" 
+                    component={LoginScreen}  
+                  />
+                  <Stack.Screen name="Register" component={RegisterScreen} />
+                  <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
+                </>
+              ) : null}
+              <Stack.Screen name="Main" component={TabNavigator} />
               <Stack.Screen 
-                name="Landing" 
-                component={Landing} 
-                options={{
-                  gestureEnabled: false,
-                  headerBackVisible: false
-                }}
+                name="Search" 
+                component={SearchScreen}
+
               />
               <Stack.Screen 
-                name="Login" 
-                component={LoginScreen} 
-                options={{
-                  gestureEnabled: false,
-                  headerBackVisible: false
-                }}
+                name="Details" 
+                component={DetailScreen}
               />
               <Stack.Screen 
-                name="Register" 
-                component={RegisterScreen} 
-                options={{
-                  gestureEnabled: false,
-                  headerBackVisible: false
-                }}
+                name="Checkout" 
+                component={CheckoutScreen}
               />
               <Stack.Screen 
-                name="VerifyEmail" 
-                component={VerifyEmailScreen} 
-                options={{
-                  gestureEnabled: false,
-                  headerBackVisible: false
-                }}
+                name="EditProfile" 
+                component={EditProfileScreen}
               />
               <Stack.Screen 
-                name="Home" 
-                component={HomeScreen} 
+                name="OrderDetailScreen" 
+                component={OrderDetailScreen}
+              />
+              <Stack.Screen 
+                name="MenuDetails" 
+                component={MenuDetailsScreen}
                 options={{
-                  gestureEnabled: false,
-                  headerBackVisible: false
+                  presentation: "formSheet",
+                  gestureDirection: "vertical",
+                  animation: "slide_from_bottom",
+                  sheetGrabberVisible: true,
                 }}
               />
-              <Stack.Screen name="Search" component={SearchScreen} />
-              <Stack.Screen name="Details" component={DetailScreen} />
-              <Stack.Screen name="Checkout" component={CheckoutScreen} />
-              <Stack.Screen name="Profile" component={ProfileScreen} />
-              <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-              <Stack.Screen name="OrdersScreen" component={OrdersScreen} />
-              <Stack.Screen name="OrderDetailScreen" component={OrderDetailScreen} />
             </Stack.Navigator>
           </NavigationContainer>
         </CartProvider>
       </StripeProvider>
     </GestureHandlerRootView>
   );
-};
-
-export default App;
+}
