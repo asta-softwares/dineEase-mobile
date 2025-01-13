@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
+import { layout } from '../styles/layout';
 
 const TopNav = ({ handleGoBack, title = "The Flavorful Fork", scrollY, variant = 'transparent', showBack = true }) => {
     if (variant === 'solid') {
@@ -49,6 +50,12 @@ const TopNav = ({ handleGoBack, title = "The Flavorful Fork", scrollY, variant =
                 [0, 100],
                 ['transparent', colors.background]
             ),
+            borderBottomColor: interpolateColor(
+                animValue.value,
+                [0, 100],
+                ['transparent', colors.border]
+            ),
+            borderBottomWidth: 1,
         };
     });
 
@@ -75,18 +82,30 @@ const TopNav = ({ handleGoBack, title = "The Flavorful Fork", scrollY, variant =
         };
     });
 
+    const backButtonStyle = useAnimatedStyle(() => {
+        return {
+            backgroundColor: interpolateColor(
+                animValue.value,
+                [0, 100],
+                ['rgba(0,0,0,0.5)', 'transparent']
+            ),
+        };
+    });
+
     return (
         <Animated.View style={[styles.topNavContainer, containerStyle]}>
             <SafeAreaView edges={['top']} style={styles.safeArea}>
                 <View style={styles.topNav}>
                     {showBack ? (
-                        <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
-                            <AnimatedIcon 
-                                name="arrow-back" 
-                                size={24} 
-                                style={iconStyle}
-                            />
-                        </TouchableOpacity>
+                        <Animated.View style={[styles.backButton, backButtonStyle]}>
+                            <TouchableOpacity style={styles.backButtonTouchable} onPress={handleGoBack}>
+                                <AnimatedIcon 
+                                    name="arrow-back" 
+                                    size={24} 
+                                    style={iconStyle}
+                                />
+                            </TouchableOpacity>
+                        </Animated.View>
                     ) : (
                         <View style={styles.placeholder} />
                     )}
@@ -107,7 +126,7 @@ export default TopNav;
 const styles = StyleSheet.create({
     topNavContainer: {
         position: "absolute",
-        top: 0,
+        top: -2,
         left: 0,
         right: 0,
         zIndex: 1,
@@ -119,13 +138,14 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        padding: 12,
-        paddingTop: Platform.OS === 'android' ? 45 : 12,
+        paddingHorizontal: layout.spacing.md,
+        paddingBottom: layout.spacing.sm,
     },
     backButton: {
+        borderRadius: 8,
+    },
+    backButtonTouchable: {
         padding: 8,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
     },
     titleContainer: {
         flex: 1,
