@@ -114,6 +114,13 @@ export default function DetailScreen({ route, navigation }) {
     setImageViewerVisible(false);
   };
 
+  const handleMenuItemPress = (item) => {
+    navigation.navigate('MenuDetails', {
+      item,
+      restaurantId,
+    });
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -287,6 +294,7 @@ export default function DetailScreen({ route, navigation }) {
                       <MenuItems 
                         items={menuItems}
                         restaurantId={restaurant.id} 
+                        handleMenuItemPress={handleMenuItemPress}
                       />
                     </View>
                   );
@@ -305,6 +313,7 @@ export default function DetailScreen({ route, navigation }) {
                       menu => !menu.category || !cuisines.some(cuisine => cuisine.id.toString() === menu.category.toString())
                     )}
                     restaurantId={restaurant.id}
+                    handleMenuItemPress={handleMenuItemPress}
                   />
                 </View>
               )}

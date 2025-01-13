@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { useCart } from '../context/CartContext';
 import { useUserStore } from '../stores/userStore';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { Ionicons } from "@expo/vector-icons";
 
 const QuantitySelector = ({ quantity, onIncrease, onDecrease }) => (
   <View style={styles.quantitySelector}>
@@ -25,18 +26,17 @@ const QuantitySelector = ({ quantity, onIncrease, onDecrease }) => (
   </View>
 );
 
-const MenuDetails = ({ item, restaurantId, visible, onClose, navigation }) => {
+const MenuDetails = ({ route, navigation }) => {
+  const { item, restaurantId } = route.params;
   const { addToCart, getItemQuantity, updateQuantity } = useCart();
   const [quantity, setQuantity] = useState(1);
   const imageUrl = item?.images?.[0]?.image || 'https://via.placeholder.com/400';
   const user = useUserStore((state) => state.user);
 
   useEffect(() => {
-    if (visible) {
-      const currentQuantity = getItemQuantity(item.id);
-      setQuantity(currentQuantity || 1);
-    }
-  }, [visible, item.id]);
+    const currentQuantity = getItemQuantity(item.id);
+    setQuantity(currentQuantity || 1);
+  }, [item.id]);
 
   const handleAddToCart = () => {
     const isAuth = useUserStore.getState().isAuthenticated();
@@ -49,7 +49,7 @@ const MenuDetails = ({ item, restaurantId, visible, onClose, navigation }) => {
     } else {
       addToCart(restaurantId, item, quantity);
     }
-    onClose();
+    navigation.goBack();
   };
 
   const handleQuantityChange = (newQuantity) => {
@@ -57,183 +57,129 @@ const MenuDetails = ({ item, restaurantId, visible, onClose, navigation }) => {
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalContainer}>
-        <Animated.View 
-          entering={FadeIn}
-          exiting={FadeOut}
-          style={styles.content}
-        >
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>×</Text>
-          </TouchableOpacity>
-          
-          <Image 
-            source={{ uri: imageUrl }} 
-            style={styles.image}
-            resizeMode="cover"
-          />
-          
-          <View style={styles.detailsContainer}>
-            <View style={styles.details}>
-              <Text style={[typography.h4, styles.name]}>{item?.name}</Text>
-              <Text style={[typography.bodyMedium, styles.description]}>
-                {item?.description}
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
+      <Ionicons name="close-outline" size={24} color={colors.text.white} />
+      </TouchableOpacity>
+      
+      <Image 
+        source={{ uri: imageUrl }} 
+        style={styles.image}
+        resizeMode="cover"
+      />
+      
+      <View style={styles.detailsContainer}>
+        <View style={styles.details}>
+          <Text style={[typography.h4, styles.name]}>{item?.name}</Text>
+          <Text style={[typography.bodyMedium, styles.description]}>
+            {item?.description}
+          </Text>
+          <Text style={[typography.h4, styles.price]}>${item?.cost}</Text>
+        </View>
+        {user && (
+          <View style={styles.footer}>
+            <QuantitySelector
+              quantity={quantity}
+              onIncrease={() => handleQuantityChange(quantity + 1)}
+              onDecrease={() => handleQuantityChange(Math.max(0, quantity - 1))}
+            />
+            <TouchableOpacity 
+              style={[styles.addToCartButton, styles.addButton]}
+              onPress={handleAddToCart}
+            >
+              <Text style={styles.addButtonText}>
+                {quantity === 0 ? 'Remove' : 'Add to Cart'}
               </Text>
-              <Text style={[typography.h4, styles.price]}>${item?.cost}</Text>
-            </View>
-            {user && (
-              <View style={styles.footer}>
-                <QuantitySelector
-                  quantity={quantity}
-                  onIncrease={() => handleQuantityChange(quantity + 1)}
-                  onDecrease={() => handleQuantityChange(Math.max(0, quantity - 1))}
-                />
-                <TouchableOpacity 
-                  style={[styles.addToCartButton, styles.addButton]}
-                  onPress={handleAddToCart}
-                >
-                  <Text style={styles.addButtonText}>
-                    {getItemQuantity(item.id) > 0 
-                      ? `Update Cart - $${(parseFloat(item?.discounted_cost) * quantity).toFixed(2)}`
-                      : `Add to Cart - $${(parseFloat(item?.discounted_cost) * quantity).toFixed(2)}`
-                    }
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
+            </TouchableOpacity>
           </View>
-        </Animated.View>
+        )}
       </View>
-    </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  modalContainer: {
+  container: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-    margin: 0,
-  },
-  content: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    height: '90%',
-    overflow: 'hidden',
-    position: 'relative',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    margin: 0,
-    width: '100%',
+    backgroundColor: colors.background,
   },
   closeButton: {
     position: 'absolute',
-    top: 16,
-    right: 16,
+    top: 40,
+    right: 20,
     zIndex: 1,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    alignItems: 'center',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
-  },
-  closeButtonText: {
-    color: colors.white,
-    fontSize: 24,
-    lineHeight: 24,
+    alignItems: 'center',
   },
   image: {
     width: '100%',
-    height: 250,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    height: 300,
   },
   detailsContainer: {
     flex: 1,
+    padding: 20,
     justifyContent: 'space-between',
   },
   details: {
-    padding: 24,
+    gap: 12,
   },
   name: {
-    marginBottom: 8,
-    color: colors.text.primary,
+    marginTop: 8,
   },
   description: {
-    color: colors.text.secondary,
-    marginBottom: 16,
+    color: colors.secondary,
   },
   price: {
     color: colors.primary,
-    marginBottom: 24,
   },
   footer: {
-    flexDirection: 'column',
-    justifyContent: 'space-between',
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 32,
+    gap: 12,
+    paddingVertical: 16,
   },
   quantitySelector: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingBottom: 16,
-    gap: 16,
+    backgroundColor: colors.light,
+    borderRadius: 8,
+    padding: 8,
   },
   quantityButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.white,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   quantityButtonDisabled: {
-    backgroundColor: colors.border,
+    opacity: 0.5,
   },
   quantityButtonText: {
-    color: colors.white,
     fontSize: 20,
-    fontWeight: 'bold',
+    color: colors.primary,
   },
   quantityText: {
-    ...typography.h4,
-    minWidth: 40,
-    textAlign: 'center',
+    marginHorizontal: 16,
+    fontSize: 16,
+    fontWeight: '600',
   },
   addButton: {
+    flex: 1,
     backgroundColor: colors.primary,
-    borderRadius: 16,
-    height: 60,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addToCartButton: {
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 8,
+    padding: 16,
   },
   addButtonText: {
     color: colors.white,
-    fontFamily: 'PlusJakartaSans-SemiBold',
+    textAlign: 'center',
     fontSize: 16,
+    fontWeight: '600',
   },
 });
 

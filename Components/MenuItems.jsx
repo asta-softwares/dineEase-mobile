@@ -1,60 +1,51 @@
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { useCart } from '../context/CartContext';
-import MenuDetails from './MenuDetails';
+import { useNavigation } from '@react-navigation/native';
 
 const MenuItem = ({ item, restaurantId }) => {
-  const [showDetails, setShowDetails] = useState(false);
   const { getItemQuantity } = useCart();
   const quantity = getItemQuantity(item.id);
+  const navigation = useNavigation();
   
   const imageUrl = item.images && item.images.length > 0 
     ? item.images[0].image 
     : 'https://via.placeholder.com/400';
 
   return (
-    <>
-      <TouchableOpacity 
-        style={[
-          styles.menuItem,
-          quantity > 0 && styles.menuItemSelected
-        ]} 
-        activeOpacity={0.7}
-        onPress={() => setShowDetails(true)}
-      >
-        <View style={styles.contentContainer}>
-          <View style={styles.textContainer}>
-            <Text style={[typography.labelLarge, styles.name]}>{item.name}</Text>
-            <Text style={[typography.bodySmall, styles.description]} numberOfLines={2}>
-              {item.description}
-            </Text>
-            <Text style={[typography.bodyMedium, styles.price]}>${item.cost}</Text>
-          </View>
-          <View>
-            <Image 
-              source={{ uri: imageUrl }} 
-              style={styles.image}
-              resizeMode="cover"
-            />
-            {quantity > 0 && (
-              <View style={styles.quantityBadge}>
-                <Text style={styles.quantityBadgeText}>{quantity}</Text>
-              </View>
-            )}
-          </View>
+    <TouchableOpacity 
+      style={[
+        styles.menuItem,
+        quantity > 0 && styles.menuItemSelected
+      ]} 
+      activeOpacity={0.7}
+      onPress={() => navigation.navigate('MenuDetails', { item, restaurantId })}
+    >
+      <View style={styles.contentContainer}>
+        <View style={styles.textContainer}>
+          <Text style={[typography.labelLarge, styles.name]}>{item.name}</Text>
+          <Text style={[typography.bodySmall, styles.description]} numberOfLines={2}>
+            {item.description}
+          </Text>
+          <Text style={[typography.bodyMedium, styles.price]}>${item.cost}</Text>
         </View>
-      </TouchableOpacity>
-
-      <MenuDetails
-        item={item}
-        restaurantId={restaurantId}
-        visible={showDetails}
-        onClose={() => setShowDetails(false)}
-      />
-    </>
+        <View>
+          <Image 
+            source={{ uri: imageUrl }} 
+            style={styles.image}
+            resizeMode="cover"
+          />
+          {quantity > 0 && (
+            <View style={styles.quantityBadge}>
+              <Text style={styles.quantityBadgeText}>{quantity}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    </TouchableOpacity>
   );
 };
 
