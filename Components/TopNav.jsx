@@ -12,13 +12,20 @@ import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { layout } from '../styles/layout';
 
-const TopNav = ({ handleGoBack, title = "The Flavorful Fork", scrollY, variant = 'transparent', showBack = true }) => {
+const TopNav = ({ 
+  handleGoBack, 
+  title = "The Flavorful Fork", 
+  scrollY, 
+  variant = 'transparent', 
+  showBackButton = true, 
+  showBack = true 
+}) => {
     if (variant === 'solid') {
         return (
             <View style={[styles.topNavContainer, { backgroundColor: colors.background }]}>
                 <SafeAreaView edges={['top']} style={styles.safeArea}>
                     <View style={styles.topNav}>
-                        {showBack ? (
+                        {showBackButton && showBack ? (
                             <TouchableOpacity 
                                 style={[styles.backButton, { backgroundColor: colors.background.secondary }]} 
                                 onPress={handleGoBack}
@@ -96,7 +103,7 @@ const TopNav = ({ handleGoBack, title = "The Flavorful Fork", scrollY, variant =
         <Animated.View style={[styles.topNavContainer, containerStyle]}>
             <SafeAreaView edges={['top']} style={styles.safeArea}>
                 <View style={styles.topNav}>
-                    {showBack ? (
+                    {showBackButton && showBack ? (
                         <Animated.View style={[styles.backButton, backButtonStyle]}>
                             <TouchableOpacity style={styles.backButtonTouchable} onPress={handleGoBack}>
                                 <AnimatedIcon 
