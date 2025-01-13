@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -10,7 +10,9 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  Alert
+  Alert,
+  StatusBar,
+  BackHandler
 } from 'react-native';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
@@ -31,7 +33,8 @@ export default function RegisterScreen({ navigation }) {
   const setUser = useUserStore(state => state.setUser);
   const setTokens = useUserStore(state => state.setTokens);
 
-  const handleRegister = async () => {
+
+  const handleRegister = async ({navigation}) => {
     if (!email || !phone || !password || !confirmPassword || !firstName || !lastName) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
@@ -85,8 +88,28 @@ export default function RegisterScreen({ navigation }) {
     }
   };
 
+  useEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => null,
+      gestureEnabled: false,
+    });
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      return true; // Prevents default back action
+    });
+
+    return () => backHandler.remove();
+  }, [navigation]);
+
+
   return (
     <SafeAreaView style={styles.container}>
+       <StatusBar
+        animated={true}
+        barStyle="dark-content"
+        translucent
+        backgroundColor="transparent"
+      />
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
@@ -103,10 +126,9 @@ export default function RegisterScreen({ navigation }) {
                   source={require('../assets/logo.png')}
                   style={styles.logo}
                 />
-                <Image
-                  source={require('../assets/logo-text-orange.png')}
-                  style={styles.logoText}
-                />
+                <Text style={[typography.h1, { color: colors.text.black }]}>
+                 Register
+                </Text>
               </View>
 
               <View style={styles.form}>
@@ -227,8 +249,8 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logo: {
-    width: 120,
-    height: 120,
+    width: 80,
+    height: 80,
     resizeMode: 'contain',
   },
   logoText: {

@@ -1,21 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   Image, 
-  KeyboardAvoidingView, 
-  ScrollView, 
-  Platform,
+  TouchableOpacity, 
+  SafeAreaView,
   TouchableWithoutFeedback,
   Keyboard,
-  Alert
+  Alert,
+  StatusBar,
+  BackHandler,
+  KeyboardAvoidingView, 
+  ScrollView, 
+  Platform
 } from 'react-native';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import LargeButton from '../Components/Buttons/LargeButton';
 import CustomInput from '../Components/CustomInput';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import authService from '../api/services/authService';
 import { useUserStore } from '../stores/userStore';
 
@@ -23,6 +26,14 @@ export default function VerifyEmailScreen({ navigation, route }) {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const email = route.params?.email;
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      return true; // Prevents default back action
+    });
+
+    return () => backHandler.remove();
+  }, []);
 
   const handleVerifyEmail = async () => {
     if (!code) {
@@ -85,6 +96,12 @@ export default function VerifyEmailScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.container}>
+       <StatusBar
+        animated={true}
+        barStyle="dark-content"
+        translucent
+        backgroundColor="transparent"
+      />
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
@@ -101,10 +118,9 @@ export default function VerifyEmailScreen({ navigation, route }) {
                   source={require('../assets/logo.png')}
                   style={styles.logo}
                 />
-                <Image
-                  source={require('../assets/logo-text-orange.png')}
-                  style={styles.logoText}
-                />
+               <Text style={[typography.h1, { color: colors.text.black }]}>
+                 Verify Email
+                </Text>
               </View>
 
               <View style={styles.form}>

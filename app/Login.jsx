@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -10,7 +10,9 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  Alert
+  Alert,
+  StatusBar,
+  BackHandler
 } from 'react-native';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
@@ -25,6 +27,7 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const setUser = useUserStore(state => state.setUser);
 
   const handleLogin = async () => {
@@ -33,31 +36,19 @@ export default function LoginScreen({ navigation }) {
       return;
     }
 
-    setLoading(true);
     try {
+      setLoading(true);
       const response = await authService.login(email, password);
 
-      // Set user in global state if needed
-      if (response.user) {
-        setUser(response.user);
+      if (response.token) {
+        await useUserStore.getState().setUser(response);
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Main' }],
+        });
       }
-
-      // Get and send push token after successful login
-      try {
-        const token = await registerForPushNotificationsAsync();
-        if (token) {
-          await authService.updateUser({
-            profile: {notification_token: token}
-          });
-          console.log('Push token sent after login:', token);
-        }
-      } catch (error) {
-        console.error('Failed to send push token:', error);
-        // Continue with login even if token update fails
-      }
-
-      navigation.replace('Home'); // Replace login screen with home screen
     } catch (error) {
+      setError(error.message);
       console.error('Login error:', error);
       console.log('Error details:', {
         status: error?.response?.status,
@@ -102,8 +93,22 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      return true; // Prevents default back action
+    });
+
+    return () => backHandler.remove();
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
+       <StatusBar
+        animated={true}
+        barStyle="dark-content"
+        translucent 
+        backgroundColor="transparent"
+      />
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
@@ -120,10 +125,9 @@ export default function LoginScreen({ navigation }) {
                   source={require('../assets/logo.png')}
                   style={styles.logo}
                 />
-                <Image
-                  source={require('../assets/logo-text-orange.png')}
-                  style={styles.logoText}
-                />
+               <Text style={[typography.h1, { color: colors.text.black }]}>
+                 Login
+                </Text>
               </View>
 
               <View style={styles.form}>
@@ -205,8 +209,8 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logo: {
-    width: 120,
-    height: 120,
+    width: 80,
+    height: 80,
     resizeMode: 'contain',
   },
   logoText: {
