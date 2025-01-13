@@ -74,7 +74,7 @@ const OrderCard = ({ order, onPress }) => {
             />
           </View>
           
-          <Text style={[typography.labelLarge, styles.restaurantName]}>
+          <Text style={[typography.h3, styles.restaurantName]}>
             {order.restaurant_details.name}
           </Text>
           
@@ -179,8 +179,8 @@ const OrdersScreen = ({ navigation }) => {
       <View style={styles.header}>
         <TopNav 
           title="My Orders" 
-          handleGoBack={() => navigation.goBack()}
           variant="solid"
+          showBackButton={false}
         />
       </View>
       <FlatList
@@ -218,10 +218,10 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: colors.background,
-    paddingTop: Platform.OS === 'ios' ? 120 : 120,
     zIndex: 10,
   },
   contentPadding: {
+    paddingTop: Platform.OS === 'ios' ? 120 : 120,
     padding: 16,
     paddingBottom: 32,
   },

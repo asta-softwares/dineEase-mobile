@@ -70,14 +70,14 @@ const OrderDetailScreen = ({ route, navigation }) => {
   const OrderItem = ({ menu_item, quantity, subtotal }) => (
     <View style={styles.orderItem}>
       <View style={styles.itemInfo}>
-        <Text style={[typography.bodyLarge, { color: colors.text.primary }]}>
+        <Text style={[typography.bodyMedium, { color: colors.text.primary }]}>
           {quantity}x {menu_item.name}
         </Text>
         <Text style={[typography.bodySmall, { color: colors.text.secondary }]}>
           ${parseFloat(menu_item.cost).toFixed(2)} each
         </Text>
       </View>
-      <Text style={[typography.bodyLarge, { color: colors.text.primary }]}>
+      <Text style={[typography.bodyMedium, { color: colors.text.primary }]}>
         ${parseFloat(subtotal).toFixed(2)}
       </Text>
     </View>
@@ -87,7 +87,7 @@ const OrderDetailScreen = ({ route, navigation }) => {
     if (type === 'status') {
       return (
         <View style={styles.totalRow}>
-          <Text style={[typography.bodyLarge, { color: colors.text.secondary }]}>
+          <Text style={[typography.bodyMedium, { color: colors.text.secondary }]}>
             {label} 
           </Text>
           <Badge 
@@ -101,7 +101,7 @@ const OrderDetailScreen = ({ route, navigation }) => {
     if (type === 'payment_method') {
       return (
         <View style={styles.totalRow}>
-          <Text style={[typography.bodyLarge, { color: colors.text.secondary }]}>
+          <Text style={[typography.bodyMedium, { color: colors.text.secondary }]}>
             {label}
           </Text>
           <View style={styles.paymentMethod}>
@@ -110,7 +110,7 @@ const OrderDetailScreen = ({ route, navigation }) => {
               width={40}
               height={25}
             />
-            <Text style={[typography.bodyLarge, { color: colors.text.black, marginLeft: 8 }]}>
+            <Text style={[typography.bodyMedium, { color: colors.text.black, marginLeft: 8 }]}>
               •••• {value}
             </Text>
           </View>
@@ -120,11 +120,11 @@ const OrderDetailScreen = ({ route, navigation }) => {
 
     return (
       <View style={styles.totalRow}>
-        <Text style={[typography.bodyLarge, { color: colors.text.secondary }]}>
+        <Text style={[typography.bodyMedium, { color: colors.text.secondary }]}>
           {label}
         </Text>
         {label === 'Discount' ? (
-          <Text style={[typography.bodyLarge, { color: colors.success }]}>
+          <Text style={[typography.bodyMedium, { color: colors.success }]}>
             -${parseFloat(value || 0).toFixed(2)}
           </Text>
         ) : type === 'transaction' ? (
@@ -132,17 +132,17 @@ const OrderDetailScreen = ({ route, navigation }) => {
             {value}
           </Text>
         ) : type === 'date' ? (
-          <Text style={[typography.bodyLarge, { color: colors.text.black }]}>
+          <Text style={[typography.bodyMedium, { color: colors.text.black }]}>
             {new Date(value).toLocaleString()}
           </Text>
         ) 
         : type === 'default' ? (
-          <Text style={[typography.bodyLarge, { color: colors.text.black }]}>
+          <Text style={[typography.bodyMedium, { color: colors.text.black }]}>
             {value}
           </Text>
         )
         : (
-          <Text style={[typography.bodyLarge, isTotal && { color: colors.text.primary }]}>
+          <Text style={[typography.bodyMedium, isTotal && { color: colors.text.primary }]}>
             ${parseFloat(value || 0).toFixed(2)}
           </Text>
         )}
@@ -154,9 +154,11 @@ const OrderDetailScreen = ({ route, navigation }) => {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={[styles.container, styles.centerContent]}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -173,49 +175,40 @@ const OrderDetailScreen = ({ route, navigation }) => {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
+        {/* Order Status Header */}
+        <View style={styles.orderStatusHeader}>
+          <Text style={[typography.bodySmall, { color: colors.text.secondary }]}>
+            {new Date(orderDetails?.order_time).toLocaleString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </Text>
+          <Badge 
+            text={order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+            type={order.status.toLowerCase()}
+          />
+        </View>
+
         {/* Restaurant Information */}
         <View style={styles.section}>
           <View style={styles.restaurantHeader}>
-            <View style={styles.leftContent}>
-              <View style={styles.restaurantInfo}>
-                <View style={styles.nameAndType}>
-                  <View style={styles.nameContainer}>
-                    <Text style={[typography.titleMedium, { color: colors.text.primary }]}>
-                      {restaurant?.name}
-                    </Text>
-                  </View>
-                  <View style={styles.orderTypeContainer}>
-                    <Ionicons 
-                      name={getOrderTypeIcon(orderDetails?.order_type)} 
-                      size={18} 
-                      color={colors.text.primary}
-                    />
-                    <Text style={[typography.bodySmall, { color: colors.text.primary, marginLeft: 4 }]}>
-                      {orderDetails?.order_type?.replace('_', ' ').split(' ').map(word => 
-                        word.charAt(0).toUpperCase() + word.slice(1)
-                      ).join(' ')}
-                    </Text>
-                  </View>
-                </View>
-                <Text style={[typography.bodyMedium, { color: colors.text.secondary }]}>
-                  {restaurant?.location}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.rightContent}>
-              <Text style={[typography.bodySmall, { color: colors.text.secondary, marginBottom: 4, textAlign: 'right' }]}>
-                {new Date(orderDetails?.order_time).toLocaleString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
+            <View style={styles.restaurantInfo}>
+              <Text style={[typography.h3, { color: colors.text.primary }]}>
+                {restaurant?.name}
               </Text>
-              <Badge 
-                text={order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                type={order.status.toLowerCase()}
-              />
+              <Text style={[typography.bodySmall, { color: colors.text.secondary }]}>
+                {restaurant?.location}
+              </Text>
             </View>
+            <Badge 
+              text={orderDetails?.order_type?.replace('_', ' ').split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+              ).join(' ')}
+              type={orderDetails?.order_type === 'dine_in' ? 'pending' : 'confirmed'}
+              icon={getOrderTypeIcon(orderDetails?.order_type)}
+            />
           </View>
           
           {orderDetails?.verification_code && order.status.toLowerCase() !== 'completed' && (
@@ -232,7 +225,7 @@ const OrderDetailScreen = ({ route, navigation }) => {
 
         {/* Order Summary */}
         <View style={styles.section}>
-          <Text style={[typography.titleMedium, styles.sectionTitle]}>Order Summary</Text>
+          <Text style={[typography.h3, styles.sectionTitle]}>Order Summary</Text>
           {orderDetails?.items.map((item, index) => (
             <OrderItem key={index} {...item} />
           ))}
@@ -263,7 +256,7 @@ const OrderDetailScreen = ({ route, navigation }) => {
 
         {/* Payment Details */}
         <View style={styles.section}>
-          <Text style={[typography.titleMedium, styles.sectionTitle]}>Payment Details</Text>
+          <Text style={[typography.h3, styles.sectionTitle]}>Payment Details</Text>
           <TotalRow label="Payment Status" value={orderDetails?.payment?.payment_status} type="status" />
           <TotalRow label="Payment Method" value={orderDetails?.payment?.card_last4} type="payment_method" />
           <TotalRow label="Payment Date" value={orderDetails?.payment?.payment_date} type="date" />
@@ -300,7 +293,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 16,
-    paddingTop: Platform.OS === 'ios' ? 140 : 140,
+    paddingTop: Platform.OS === 'ios' ? 120 : 120,
     paddingBottom: 92,
   },
   section: {
@@ -327,19 +320,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  leftContent: {
-    flex: 1,
-  },
-  rightContent: {
-    alignItems: 'flex-end',
-  },
   restaurantInfo: {
     flex: 1,
-    marginLeft: 12,
-  },
-  nameAndType: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginRight: 16,
   },
   verificationContainer: {
     marginTop: 16,
@@ -414,10 +397,25 @@ const styles = StyleSheet.create({
   orderTypeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 8,
+    paddingLeft: 8,
+    borderLeftWidth: 1,
+    borderLeftColor: colors.border,
   },
-  nameContainer: {
+  locationContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: 8,
+  },
+  orderStatusHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
 });
