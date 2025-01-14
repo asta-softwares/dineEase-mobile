@@ -74,7 +74,7 @@ const MenuDetails = ({ route, navigation }) => {
           <Text style={[typography.bodyMedium, styles.description]}>
             {item?.description}
           </Text>
-          <Text style={[typography.h4, styles.price]}>${item?.cost}</Text>
+          <Text style={[typography.h3, styles.price]}>${item?.cost}</Text>
         </View>
         {user && (
           <View style={styles.footer}>

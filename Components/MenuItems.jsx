@@ -1,10 +1,11 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View, Dimensions } from 'react-native';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { useCart } from '../context/CartContext';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const MenuItem = ({ item, restaurantId }) => {
   const { getItemQuantity } = useCart();
@@ -24,27 +25,29 @@ const MenuItem = ({ item, restaurantId }) => {
       activeOpacity={0.7}
       onPress={() => navigation.navigate('MenuDetails', { item, restaurantId })}
     >
-      <View style={styles.contentContainer}>
-        <View style={styles.textContainer}>
-          <Text style={[typography.labelLarge, styles.name]}>{item.name}</Text>
-          <Text style={[typography.bodySmall, styles.description]} numberOfLines={2}>
-            {item.description}
+      <Image 
+        source={{ uri: imageUrl }} 
+        style={styles.image}
+        resizeMode="cover"
+      />
+      <LinearGradient
+        colors={['rgba(0,0,0,0.8)', 'rgba(0,0,0,0.4)', 'transparent']}
+        style={styles.gradient}
+      >
+        <View style={styles.contentContainer}>
+          <Text style={[typography.labelLarge, styles.name]} numberOfLines={1}>
+            {item.name}
           </Text>
-          <Text style={[typography.bodyMedium, styles.price]}>${item.cost}</Text>
+          <Text style={[typography.bodyMedium, styles.price]}>
+            ${item.cost}
+          </Text>
         </View>
-        <View>
-          <Image 
-            source={{ uri: imageUrl }} 
-            style={styles.image}
-            resizeMode="cover"
-          />
-          {quantity > 0 && (
-            <View style={styles.quantityBadge}>
-              <Text style={styles.quantityBadgeText}>{quantity}</Text>
-            </View>
-          )}
+      </LinearGradient>
+      {quantity > 0 && (
+        <View style={styles.quantityBadge}>
+          <Text style={styles.quantityBadgeText}>{quantity}</Text>
         </View>
-      </View>
+      )}
     </TouchableOpacity>
   );
 };
@@ -54,7 +57,6 @@ MenuItem.propTypes = {
     id: PropTypes.number.isRequired,
     name: PropTypes.string.isRequired,
     cost: PropTypes.string.isRequired,
-    description: PropTypes.string,
     images: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.number,
@@ -67,14 +69,26 @@ MenuItem.propTypes = {
 };
 
 const MenuItems = ({ items, restaurantId }) => {
+  // Split items into pairs for two columns
+  const rows = [];
+  for (let i = 0; i < items.length; i += 2) {
+    rows.push(items.slice(i, i + 2));
+  }
+
   return (
     <View style={styles.container}>
-      {items.map((item) => (
-        <MenuItem
-          key={item.id}
-          item={item}
-          restaurantId={restaurantId}
-        />
+      {rows.map((row, rowIndex) => (
+        <View key={rowIndex} style={styles.row}>
+          {row.map((item) => (
+            <MenuItem
+              key={item.id}
+              item={item}
+              restaurantId={restaurantId}
+            />
+          ))}
+          {/* Add empty view if row has only one item */}
+          {row.length === 1 && <View style={styles.menuItem} />}
+        </View>
       ))}
     </View>
   );
@@ -86,69 +100,75 @@ MenuItems.propTypes = {
       id: PropTypes.number.isRequired,
       name: PropTypes.string.isRequired,
       cost: PropTypes.string.isRequired,
-      description: PropTypes.string,
       images: PropTypes.array,
     })
   ).isRequired,
   restaurantId: PropTypes.number.isRequired,
 };
 
+const windowWidth = Dimensions.get('window').width;
+const HORIZONTAL_PADDING = 20;
+const ITEM_GAP = 20;
+const VERTICAL_GAP = 24;
+const itemSize = Math.floor((windowWidth - (HORIZONTAL_PADDING * 2) - ITEM_GAP) / 2);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: '100%',
+    marginHorizontal: -HORIZONTAL_PADDING,
+  },
+  row: {
+    flexDirection: 'row',
+    marginBottom: VERTICAL_GAP,
+    gap: ITEM_GAP,
+    paddingHorizontal: HORIZONTAL_PADDING,
   },
   menuItem: {
-    width: '100%',
-    marginBottom: 12,
-    backgroundColor: colors.white,
-    borderColor: colors.border,
-    borderWidth: 1,
+    width: itemSize,
+    height: itemSize,
     borderRadius: 12,
     overflow: 'hidden',
+    backgroundColor: colors.white,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 0,
+      height: 2,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 0,
-    elevation: 0,
+    shadowRadius: 4,
+    elevation: 2,
   },
   menuItemSelected: {
     borderColor: colors.primary,
     borderWidth: 2,
   },
+  image: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
+  gradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '70%',
+  },
   contentContainer: {
-    flexDirection: 'row',
     padding: 12,
   },
-  textContainer: {
-    flex: 1,
-    marginRight: 12,
-  },
-  image: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    backgroundColor: '#E1E9EE',
-  },
   name: {
-    color: colors.text.primary,
-    marginBottom: 4,
-  },
-  description: {
-    color: colors.text.secondary,
+    color: colors.white,
     marginBottom: 4,
   },
   price: {
-    color: colors.primary,
-    fontWeight: '600',
+    color: colors.white,
   },
   quantityBadge: {
     position: 'absolute',
-    top: -8,
-    right: -8,
+    top: 8,
+    right: 8,
     backgroundColor: colors.primary,
     borderRadius: 12,
     minWidth: 24,

@@ -185,7 +185,7 @@ export default function DetailScreen({ route, navigation }) {
               <View style={styles.infoContainer}>
                 {restaurant?.categories?.length > 0 && (
                   <View style={styles.infoItem}>
-                    <Ionicons name="restaurant-outline" size={14} color={colors.text.primary} style={styles.infoIcon} />
+                    <Ionicons name="restaurant-outline" size={14} color={colors.text.black} style={styles.infoIcon} />
                     <Text style={[typography.bodyMedium, styles.infoText, { color: colors.text.secondary }]}>
                       {restaurant.categories.map(cat => cat.name).join(', ')}
                     </Text>
@@ -442,13 +442,13 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     marginBottom: 24,
-    color: colors.text.black,
+    color: colors.text.primary,
   },
   cuisineTitle: {
     marginBottom: 16,
     fontFamily: 'PlusJakartaSans-Bold',
     fontSize: 20,
-    color: colors.text.primary,
+    color: colors.text.black,
     paddingHorizontal: 4,
   },
   footer: {
