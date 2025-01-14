@@ -70,7 +70,7 @@ const MenuDetails = ({ route, navigation }) => {
       
       <View style={styles.detailsContainer}>
         <View style={styles.details}>
-          <Text style={[typography.h4, styles.name]}>{item?.name}</Text>
+          <Text style={[typography.h2, styles.name]}>{item?.name}</Text>
           <Text style={[typography.bodyMedium, styles.description]}>
             {item?.description}
           </Text>

@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans-Medium',
   },
   restaurantName: {
-    color: colors.text.primary,
+    color: colors.text.black,
     marginBottom: 8,
   },
   description: {

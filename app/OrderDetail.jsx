@@ -195,7 +195,7 @@ const OrderDetailScreen = ({ route, navigation }) => {
         <View style={styles.section}>
           <View style={styles.restaurantHeader}>
             <View style={styles.restaurantInfo}>
-              <Text style={[typography.h3, { color: colors.text.primary }]}>
+              <Text style={[typography.h3, { color: colors.text.black }]}>
                 {restaurant?.name}
               </Text>
               <Text style={[typography.bodySmall, { color: colors.text.secondary }]}>
