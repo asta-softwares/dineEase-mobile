@@ -8,7 +8,7 @@ import {
   PlusJakartaSans_600SemiBold,
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ActivityIndicator, View, Platform } from 'react-native';
@@ -36,6 +36,7 @@ import authService from './api/services/authService';
 import SearchScreen from './app/Search';
 import MenuDetailsScreen from './Components/MenuDetails';
 import { Ionicons } from '@expo/vector-icons';
+import { setNavigationRef } from './api/client';
 // Initialize reanimated
 import 'react-native-reanimated';
 
@@ -151,6 +152,14 @@ export default function App() {
   const stripePublishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
   const merchantIdentifier = process.env.EXPO_PUBLIC_MERCHANT_IDENTIFIER;
 
+  const navigationRef = useRef(null);
+
+  useEffect(() => {
+    if (navigationRef.current) {
+      setNavigationRef(navigationRef.current);
+    }
+  }, []);
+
   useEffect(() => {
     const initApp = async () => {
       try {
@@ -225,7 +234,7 @@ export default function App() {
         merchantIdentifier={merchantIdentifier}
       >
         <CartProvider>
-          <NavigationContainer>
+          <NavigationContainer ref={navigationRef}>
             <Stack.Navigator
               screenOptions={{
                 headerShown: false
@@ -238,7 +247,10 @@ export default function App() {
                     name="Login" 
                     component={LoginScreen}
                     options={{
-                      gestureEnabled: false
+                      presentation: "formSheet",
+                      gestureDirection: "vertical",
+                      animation: "slide_from_bottom",
+                      sheetGrabberVisible: true,
                     }}
                   />
                   <Stack.Screen 

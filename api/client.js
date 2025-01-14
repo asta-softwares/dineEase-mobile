@@ -2,6 +2,7 @@ import axios from 'axios';
 import config from './config';
 import { useUserStore } from '../stores/userStore';
 import { tokenService } from './services/tokenService';
+import { CommonActions } from '@react-navigation/native';
 
 const apiClient = axios.create({
   baseURL: config.BASE_URL,
@@ -11,6 +12,11 @@ const apiClient = axios.create({
 
 let isRefreshing = false;
 let failedQueue = [];
+let navigationRef = null;
+
+export const setNavigationRef = (ref) => {
+  navigationRef = ref;
+};
 
 const processQueue = (error, token = null) => {
   failedQueue.forEach(prom => {
@@ -42,6 +48,21 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    // Check for token_not_valid error
+    if (error.response?.status === 401 && 
+        error.response?.data?.code === 'token_not_valid') {
+      await useUserStore.getState().clearUser();
+      if (navigationRef?.isReady()) {
+        navigationRef.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'Landing' }],
+          })
+        );
+      }
+      return Promise.reject(error);
+    }
 
     // If error is not 401 or request already retried, reject
     if (error.response?.status !== 401 || originalRequest._retry) {
@@ -83,6 +104,16 @@ apiClient.interceptors.response.use(
       processQueue(refreshError, null);
       // Clear tokens and user state
       await useUserStore.getState().clearUser();
+      
+      // Navigate to Landing
+      if (navigationRef?.isReady()) {
+        navigationRef.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'Landing' }],
+          })
+        );
+      }
       
       // Pass through the original 401 error instead of the refresh error
       return Promise.reject(error);
