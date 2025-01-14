@@ -33,8 +33,8 @@ export default function RegisterScreen({ navigation }) {
   const setUser = useUserStore(state => state.setUser);
   const setTokens = useUserStore(state => state.setTokens);
 
-
-  const handleRegister = async ({navigation}) => {
+  const handleRegister = async () => {
+    const nav = navigation; // get navigation from component scope
     if (!email || !phone || !password || !confirmPassword || !firstName || !lastName) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
@@ -63,7 +63,7 @@ export default function RegisterScreen({ navigation }) {
         [
           {
             text: 'OK',
-            onPress: () => navigation.replace('VerifyEmail', { email })
+            onPress: () => nav.replace('VerifyEmail', { email })
           }
         ]
       );

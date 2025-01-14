@@ -173,7 +173,7 @@ export default function LoginScreen({ navigation }) {
 
                 <TouchableOpacity 
                   style={styles.registerLink}
-                  onPress={() => navigation.navigate('Register')}
+                  onPress={() => navigation.replace('Register')}
                 >
                   <Text style={[typography.labelMedium, { color: colors.text.primary }]}>
                     Don't have an account? Sign Up
