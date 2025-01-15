@@ -37,7 +37,7 @@ const RestaurantInfo = ({ route, navigation }) => {
             <View style={styles.infoContainer}>
               {restaurant?.categories?.length > 0 && (
                 <View style={styles.infoItem}>
-                  <Ionicons name="restaurant-outline" size={16} color={colors.text.black} style={styles.infoIcon} />
+                  <Ionicons name="restaurant-outline" size={16} color={colors.text.primary} style={styles.infoIcon} />
                   <Text style={[typography.bodyLarge, styles.infoText]}>
                     {restaurant.categories.map(cat => cat.name).join(', ')}
                   </Text>

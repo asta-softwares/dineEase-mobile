@@ -1,16 +1,18 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View, Dimensions } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
-import { useCart } from '../context/CartContext';
-import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const MenuItem = ({ item, restaurantId }) => {
-  const { getItemQuantity } = useCart();
+const MenuItem = ({ item, restaurantId, cart, onPress }) => {
+  const getItemQuantity = (itemId) => {
+    if (!cart?.items) return 0;
+    const cartItem = cart.items.find(i => i.menu === itemId);
+    return cartItem ? cartItem.quantity : 0;
+  };
+
   const quantity = getItemQuantity(item.id);
-  const navigation = useNavigation();
   
   const imageUrl = item.images && item.images.length > 0 
     ? item.images[0].image 
@@ -23,7 +25,7 @@ const MenuItem = ({ item, restaurantId }) => {
         quantity > 0 && styles.menuItemSelected
       ]} 
       activeOpacity={0.7}
-      onPress={() => navigation.navigate('MenuDetails', { item, restaurantId })}
+      onPress={() => onPress(item)}
     >
       <Image 
         source={{ uri: imageUrl }} 
@@ -66,9 +68,11 @@ MenuItem.propTypes = {
     ),
   }).isRequired,
   restaurantId: PropTypes.number.isRequired,
+  cart: PropTypes.object,
+  onPress: PropTypes.func.isRequired,
 };
 
-const MenuItems = ({ items, restaurantId }) => {
+const MenuItems = ({ items, restaurantId, cart, onMenuItemPress }) => {
   // Split items into pairs for two columns
   const rows = [];
   for (let i = 0; i < items.length; i += 2) {
@@ -84,6 +88,8 @@ const MenuItems = ({ items, restaurantId }) => {
               key={item.id}
               item={item}
               restaurantId={restaurantId}
+              cart={cart}
+              onPress={onMenuItemPress}
             />
           ))}
           {/* Add empty view if row has only one item */}
@@ -104,40 +110,27 @@ MenuItems.propTypes = {
     })
   ).isRequired,
   restaurantId: PropTypes.number.isRequired,
+  cart: PropTypes.object,
+  onMenuItemPress: PropTypes.func.isRequired,
 };
-
-const windowWidth = Dimensions.get('window').width;
-const HORIZONTAL_PADDING = 20;
-const ITEM_GAP = 20;
-const VERTICAL_GAP = 24;
-const itemSize = Math.floor((windowWidth - (HORIZONTAL_PADDING * 2) - ITEM_GAP) / 2);
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     width: '100%',
-    marginHorizontal: -HORIZONTAL_PADDING,
   },
   row: {
     flexDirection: 'row',
-    marginBottom: VERTICAL_GAP,
-    gap: ITEM_GAP,
-    paddingHorizontal: HORIZONTAL_PADDING,
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   menuItem: {
-    width: itemSize,
-    height: itemSize,
+    width: '48%',
+    height: 180,
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: colors.white,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   menuItemSelected: {
     borderColor: colors.primary,
@@ -146,17 +139,18 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
-    position: 'absolute',
   },
   gradient: {
     position: 'absolute',
-    top: 0,
     left: 0,
     right: 0,
-    height: '70%',
+    top: 0,
+    height: '100%',
+    padding: 12,
   },
   contentContainer: {
-    padding: 12,
+    flex: 1,
+    justifyContent: 'flex-start',
   },
   name: {
     color: colors.white,
@@ -171,18 +165,15 @@ const styles = StyleSheet.create({
     right: 8,
     backgroundColor: colors.primary,
     borderRadius: 12,
-    minWidth: 24,
+    width: 24,
     height: 24,
-    alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: colors.white,
+    alignItems: 'center',
   },
   quantityBadgeText: {
     color: colors.white,
     fontSize: 12,
-    fontFamily: 'PlusJakartaSans-Bold',
-    paddingHorizontal: 6,
+    fontWeight: 'bold',
   },
 });
 

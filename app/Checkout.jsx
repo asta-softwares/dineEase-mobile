@@ -13,11 +13,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
-import { useCart } from '../context/CartContext';
 import { useUserStore } from '../stores/userStore';
 import TopNav from '../Components/TopNav';
 import Badge from '../Components/Badge';
 import { restaurantService } from '../api/services/restaurantService';
+import cartService from '../api/services/cartService';
 import Footer from './Layout/Footer';
 import LargeButton from '../Components/Buttons/LargeButton';
 import { useStripe } from '@stripe/stripe-react-native';
@@ -27,14 +27,14 @@ const CartItem = ({ item, quantity }) => (
   <View style={styles.orderItem}>
     <View style={styles.itemInfo}>
       <Text style={[typography.bodyLarge, { color: colors.text.primary }]}>
-        {quantity}x {item.name}
+        {quantity}x {item.menu_name}
       </Text>
       <Text style={[typography.bodySmall, { color: colors.text.secondary }]}>
-        ${item.cost} each
+        ${item.menu_cost} each
       </Text>
     </View>
     <Text style={[typography.bodyLarge, { color: colors.text.primary }]}>
-      ${(item.cost * quantity).toFixed(2)}
+      ${(item.menu_cost * quantity).toFixed(2)}
     </Text>
   </View>
 );
@@ -72,12 +72,13 @@ const TotalRow = ({ label, value, isTotal, type }) => {
 };
 
 const CheckoutScreen = ({ route, navigation }) => {
-  const { cart, getTotalCost, clearCart } = useCart();
-  const user = useUserStore((state) => state.user);
   const { restaurantId, isDineIn } = route.params;
+  const user = useUserStore((state) => state.user);
+  const [cart, setCart] = useState(null);
   const [restaurant, setRestaurant] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [calculating, setCalculating] = useState(false);
   const [orderTotals, setOrderTotals] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -86,17 +87,51 @@ const CheckoutScreen = ({ route, navigation }) => {
   const [showPromoDropdown, setShowPromoDropdown] = useState(false);
   const { initPaymentSheet, presentPaymentSheet, retrievePaymentIntent } = useStripe();
 
-  const subtotal = getTotalCost() || 0;
+  const getTotalCost = () => {
+    if (!cart?.items) return 0;
+    return cart.items.reduce((total, item) => {
+      return total + (parseFloat(item.menu_cost) * item.quantity);
+    }, 0);
+  };
+
+  const subtotal = getTotalCost();
+
+  useEffect(() => {
+    const loadCartAndRestaurant = async () => {
+      try {
+        setInitialLoading(true);
+        // Load restaurant first to get owner ID
+        const restaurantData = await restaurantService.getRestaurantById(restaurantId);
+        setRestaurant(restaurantData);
+        
+        // Load cart with restaurant owner ID
+        const cartData = await cartService.getCart(restaurantId);
+        if (cartData) {
+          setCart({
+            ...cartData,
+            owner_id: restaurantData.owner
+          });
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+        Alert.alert('Error', 'Failed to load cart or restaurant data');
+        navigation.goBack();
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+    loadCartAndRestaurant();
+  }, [restaurantId]);
 
   useEffect(() => {
     const calculateOrderTotal = async () => {
-      if (cart.restaurantId && subtotal > 0) {
+      if (cart && subtotal > 0) {
         try {
           setCalculating(true);
           const promoIds = selectedPromos.map(promo => promo.id);
           const calculateTotal = await restaurantService.getOrderTotal({
             order_total: subtotal.toFixed(2),
-            restaurant_id: cart.restaurantId,
+            restaurant_id: restaurantId,
             promo_ids: promoIds,
           });
           setOrderTotals(calculateTotal);
@@ -109,21 +144,7 @@ const CheckoutScreen = ({ route, navigation }) => {
       }
     };
     calculateOrderTotal();
-  }, [cart.restaurantId, subtotal, selectedPromos]);
-
-  useEffect(() => {
-    const loadRestaurant = async () => {
-      if (cart.restaurantId) {
-        try {
-          const data = await restaurantService.getRestaurantById(cart.restaurantId);
-          setRestaurant(data);
-        } catch (error) {
-          console.error('Error loading restaurant:', error);
-        }
-      }
-    };
-    loadRestaurant();
-  }, [cart.restaurantId]);
+  }, [cart, subtotal, selectedPromos]);
 
   useEffect(() => {
     const fetchAvailablePromos = async () => {
@@ -158,7 +179,7 @@ const CheckoutScreen = ({ route, navigation }) => {
       setLoading(true);
 
       // Check if restaurant is still open
-      const currentRestaurant = await restaurantService.getRestaurantById(cart.restaurantId);
+      const currentRestaurant = await restaurantService.getRestaurantById(restaurantId);
       if (!currentRestaurant.is_open) {
         Alert.alert('Restaurant Closed', 'This restaurant is currently closed and cannot accept orders.');
         return;
@@ -179,21 +200,22 @@ const CheckoutScreen = ({ route, navigation }) => {
         return;
       }
 
-      // Prepare order data
+      // Prepare order data with owner_id from restaurant
       const orderData = {
         amount: orderTotals.total.toFixed(2),
         restaurant_id: restaurantId,
-        menu_items: Object.values(cart.items).map(({ item, quantity }) => ({
+        menu_items: cart.items.map(item => ({
           menu_item_id: item.id,
-          quantity: quantity,
+          quantity: item.quantity,
         })),
         promo_ids: selectedPromos.map(promo => promo.id),
-        owner_id: cart.owner_id,
+        owner_id: restaurant.owner,
         order_type: isDineIn ? 'dine_in' : 'takeaway',
+        order_total: orderTotals.total.toFixed(2),
       };
 
       const { clientSecret, customerId, ephemeralKey } = await restaurantService.createPaymentIntent({
-        amount: orderTotals.total.toFixed(2),
+        order_total: orderTotals.total.toFixed(2),
         restaurant_id: restaurantId,
       }).catch(error => {
         Alert.alert('Payment Error', error.message);
@@ -267,7 +289,9 @@ const CheckoutScreen = ({ route, navigation }) => {
             {
               text: 'OK',
               onPress: () => {
-                clearCart();
+                if (cart?.id) {
+                  cartService.deleteCart(cart.id);
+                }
                 navigation.navigate('OrderDetailScreen', { order: orderDetailsData, restaurant: restaurant, fromCheckout: true });
               },
             },
@@ -280,13 +304,28 @@ const CheckoutScreen = ({ route, navigation }) => {
 
     } catch (error) {
       console.error('Payment process error:', error);
+      Alert.alert('Error', error.message || 'Failed to process payment');
     } finally {
       setIsProcessing(false);
       setLoading(false);
     }
   };
 
-  if (!cart.restaurantId || Object.keys(cart.items).length === 0) {
+  if (initialLoading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <TopNav 
+          handleGoBack={() => navigation.goBack()} 
+          title="Checkout" 
+          variant="solid"
+          showBack={true}
+        />
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (!cart || cart.items.length === 0) {
     return (
       <View style={styles.container}>
         <TopNav 
@@ -408,8 +447,8 @@ const CheckoutScreen = ({ route, navigation }) => {
         {/* Order Summary */}
         <View style={styles.section}>
           <Text style={[typography.titleMedium, styles.sectionTitle]}>Order Summary</Text>
-          {Object.entries(cart.items).map(([id, { item, quantity }]) => (
-            <CartItem key={id} item={item} quantity={quantity} />
+          {cart.items.map((item, index) => (
+            <CartItem key={index} item={item} quantity={item.quantity} />
           ))}
           
           <View style={styles.divider} />
@@ -592,6 +631,10 @@ const styles = StyleSheet.create({
   },
   emptyCart: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  centerContent: {
     justifyContent: 'center',
     alignItems: 'center',
   },

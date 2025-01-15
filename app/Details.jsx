@@ -24,13 +24,10 @@ import Animated, {
 import { restaurantService } from "../api/services/restaurantService";
 import { colors } from "../styles/colors";
 import { typography } from "../styles/typography";
-import Footer from './Layout/Footer';
-import LargeButton from '../Components/Buttons/LargeButton';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useCart } from '../context/CartContext';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Platform } from 'react-native';
 import authService from '../api/services/authService';
+import cartService from '../api/services/cartService';
 import { Alert } from 'react-native';
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
@@ -44,25 +41,7 @@ export default function DetailScreen({ route, navigation }) {
   const [restaurant, setRestaurant] = useState(null);
   const [error, setError] = useState(null);
   const [cuisines, setCuisines] = useState([]);
-  const cartContext = useCart();
-  const { cart, getTotalItems, getTotalCost, setOwner } = cartContext || {};
-  
-  const totalItems = cart?.restaurantId === restaurantId ? (getTotalItems?.() || 0) : 0;
-  const cartTotal = cart?.restaurantId === restaurantId ? (getTotalCost?.() || 0) : 0;
-  const footerAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          translateY: withSpring(totalItems > 0 ? 0 : 100, {
-            damping: 20,
-            stiffness: 90,
-          })
-        }
-      ],
-      opacity: withSpring(totalItems > 0 ? 1 : 0)
-    };
-  }, [totalItems]);
-
+  const [cart, setCart] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
@@ -77,9 +56,6 @@ export default function DetailScreen({ route, navigation }) {
         setRestaurant(restaurantData);
         setCuisines(cuisinesData);
         setIsFavorite(restaurantData?.is_favorite || false);
-        if (restaurantData?.owner) {
-          setOwner(restaurantData.owner);
-        }
       } catch (error) {
         setError(error.message);
         console.error('Error loading restaurant:', error);
@@ -90,11 +66,34 @@ export default function DetailScreen({ route, navigation }) {
     fetchData();
   }, [restaurantId]);
 
+  useEffect(() => {
+    const fetchCart = async () => {
+      try {
+        const cartData = await cartService.getCart(restaurantId);
+        setCart(cartData);
+      } catch (error) {
+        console.error('Error fetching cart:', error);
+      }
+    };
+    fetchCart();
+  }, [restaurantId]);
+
+  const getTotalItems = () => {
+    'worklet';
+    if (!cart?.items) return 0;
+    return cart.items.length;
+  };
+
+  const getTotalCost = () => {
+    'worklet';
+    if (!cart?.items) return 0;
+    return cart.total_cost; 
+  };
+
   const handleFavoriteToggle = async () => {
     try {
       const newFavoriteStatus = !isFavorite;
       setIsFavorite(newFavoriteStatus); // Optimistic update
-  
       await authService.toggleFavorite('restaurant', restaurantId);
     } catch (error) {
       setIsFavorite(!isFavorite); // Revert on error
@@ -116,6 +115,21 @@ export default function DetailScreen({ route, navigation }) {
     ),
   }));
 
+  const footerAnimatedStyle = useAnimatedStyle(() => {
+    const totalItems = getTotalItems();
+    return {
+      transform: [
+        {
+          translateY: withSpring(totalItems > 0 ? 0 : 100, {
+            damping: 20,
+            stiffness: 90,
+          })
+        }
+      ],
+      opacity: withSpring(totalItems > 0 ? 1 : 0)
+    };
+  });
+
   const handleGoBack = () => {
     navigation.goBack();
   };
@@ -135,7 +149,44 @@ export default function DetailScreen({ route, navigation }) {
     navigation.navigate('MenuDetails', {
       item,
       restaurantId,
+      cart,
+      onAddToCart: handleAddToCart,
+      onRemoveFromCart: handleRemoveFromCart
     });
+  };
+
+  const handleAddToCart = async (item, quantity) => {
+    try {
+      const cartData = {
+        restaurant: restaurantId,
+        items: [{
+          menu: item.id,
+          quantity: quantity,
+        }]
+      };
+
+      let updatedCart;
+      if (!cart) {
+        updatedCart = await cartService.createCart(cartData);
+      } else {
+        updatedCart = await cartService.updateCart(cart.id, cartData);
+      }
+      setCart(updatedCart);
+    } catch (error) {
+      console.error('Error updating cart:', error);
+      throw error;
+    }
+  };
+
+  const handleRemoveFromCart = async (itemId) => {
+    try {
+      if (!cart) return;
+      const updatedCart = await cartService.deleteItemCart(cart.id, itemId);
+      setCart(updatedCart);
+    } catch (error) {
+      console.error('Error removing item from cart:', error);
+      throw error;
+    }
   };
 
   if (loading) {
@@ -153,6 +204,9 @@ export default function DetailScreen({ route, navigation }) {
       </View>
     );
   }
+
+  const totalItems = getTotalItems();
+  const cartTotal = getTotalCost();
 
   return (
     <View style={styles.container}>
@@ -190,23 +244,20 @@ export default function DetailScreen({ route, navigation }) {
           </TouchableOpacity>
 
           <View style={[styles.content, { backgroundColor: colors.light }]}>
-         
-              <View style={[styles.header]}>
-                <Text style={[typography.h2, styles.title, { color: colors.text.black }]}>{restaurant?.name}</Text>
-                <View style={styles.ratingContainer}>
-                  <LinearGradient
-                    colors={colors.gradients.rating}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.ratingBadge}
-                  >
-                    <Ionicons name="star" size={14} color={colors.white} />
-                    <Text style={styles.ratingText}>{restaurant?.ratings?.toFixed(1) || '0.0'}</Text>
-                  </LinearGradient>
-                </View>
+            <View style={[styles.header]}>
+              <Text style={[typography.h2, styles.title, { color: colors.text.black }]}>{restaurant?.name}</Text>
+              <View style={styles.ratingContainer}>
+                <LinearGradient
+                  colors={colors.gradients.rating}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.ratingBadge}
+                >
+                  <Ionicons name="star" size={14} color={colors.white} />
+                  <Text style={styles.ratingText}>{restaurant?.ratings?.toFixed(1) || '0.0'}</Text>
+                </LinearGradient>
               </View>
-             
-         
+            </View>
 
             {restaurant?.promos?.length > 0 && (
               <>
@@ -261,7 +312,8 @@ export default function DetailScreen({ route, navigation }) {
                       <MenuItems 
                         items={menuItems}
                         restaurantId={restaurant.id} 
-                        handleMenuItemPress={handleMenuItemPress}
+                        cart={cart}
+                        onMenuItemPress={handleMenuItemPress}
                       />
                     </View>
                   );
@@ -280,7 +332,8 @@ export default function DetailScreen({ route, navigation }) {
                       menu => !menu.category || !cuisines.some(cuisine => cuisine.id.toString() === menu.category.toString())
                     )}
                     restaurantId={restaurant.id}
-                    handleMenuItemPress={handleMenuItemPress}
+                    cart={cart}
+                    onMenuItemPress={handleMenuItemPress}
                   />
                 </View>
               )}
@@ -313,7 +366,7 @@ export default function DetailScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.light,
     width: '100%',
   },
   image: {
@@ -412,7 +465,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: colors.white,
+    backgroundColor: colors.background,
     paddingBottom: 32,
     padding: 16,
     borderTopWidth: 1,
