@@ -6,10 +6,6 @@ const API_URL = 'https://partners.dineease.ca/api';
 const config = {
   BASE_URL: API_URL,
   TIMEOUT: 10000,
-  HEADERS: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  },
 };
 
 export default config;

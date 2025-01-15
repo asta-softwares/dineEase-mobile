@@ -499,6 +499,7 @@ export default function HomeScreen({ navigation }) {
                           imageUrl={restaurant.image}
                           promos={restaurant.promos}
                           isOpen={restaurant.is_open}
+                          isFavorite={restaurant.is_favorite}
                         />
                       </TouchableOpacity>
                     ))

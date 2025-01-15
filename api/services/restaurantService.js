@@ -1,4 +1,5 @@
 import apiClient from '../client';
+import { useUserStore } from '../../stores/userStore';
 
 export const restaurantService = {
   getAllRestaurants: async (params) => {
@@ -23,7 +24,8 @@ export const restaurantService = {
 
   getRestaurantById: async (id) => {
     try {
-      const response = await apiClient.get(`/restaurants/${id}`);
+      const response = await apiClient.get(`/restaurants/${id}/`, {
+      });
       return response.data;
     } catch (error) {
       const errorMessage = error.response?.data?.message || 

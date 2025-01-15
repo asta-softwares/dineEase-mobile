@@ -30,6 +30,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useCart } from '../context/CartContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Platform } from 'react-native';
+import authService from '../api/services/authService';
+import { Alert } from 'react-native';
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 
@@ -61,6 +63,8 @@ export default function DetailScreen({ route, navigation }) {
     };
   }, [totalItems]);
 
+  const [isFavorite, setIsFavorite] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -72,7 +76,7 @@ export default function DetailScreen({ route, navigation }) {
         ]);
         setRestaurant(restaurantData);
         setCuisines(cuisinesData);
-        // Set owner ID when restaurant loads
+        setIsFavorite(restaurantData?.is_favorite || false);
         if (restaurantData?.owner) {
           setOwner(restaurantData.owner);
         }
@@ -85,6 +89,19 @@ export default function DetailScreen({ route, navigation }) {
     };
     fetchData();
   }, [restaurantId]);
+
+  const handleFavoriteToggle = async () => {
+    try {
+      const newFavoriteStatus = !isFavorite;
+      setIsFavorite(newFavoriteStatus); // Optimistic update
+  
+      await authService.toggleFavorite('restaurant', restaurantId);
+    } catch (error) {
+      setIsFavorite(!isFavorite); // Revert on error
+      Alert.alert('Error', 'Failed to update favorite status');
+      console.error('Error updating favorite:', error);
+    }
+  };
 
   const scrollHandler = useAnimatedScrollHandler((event) => {
     scrollY.value = event.contentOffset.y;
@@ -139,7 +156,15 @@ export default function DetailScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <TopNav title={restaurant?.name} handleGoBack={handleGoBack} scrollY={scrollY} />
+      <TopNav 
+        title={restaurant?.name} 
+        handleGoBack={handleGoBack} 
+        scrollY={scrollY}
+        showActionButtons={true}
+        onInfoPress={() => navigation.navigate('RestaurantInfo', { restaurant })}
+        isFavorite={isFavorite}
+        onFavoritePress={handleFavoriteToggle}
+      />
       
       <AnimatedScrollView
         onScroll={scrollHandler}
@@ -181,65 +206,7 @@ export default function DetailScreen({ route, navigation }) {
                 </View>
               </View>
              
-             <View style={styles.contentWrapper}>
-              <View style={styles.infoContainer}>
-                {restaurant?.categories?.length > 0 && (
-                  <View style={styles.infoItem}>
-                    <Ionicons name="restaurant-outline" size={14} color={colors.text.black} style={styles.infoIcon} />
-                    <Text style={[typography.bodyMedium, styles.infoText, { color: colors.text.secondary }]}>
-                      {restaurant.categories.map(cat => cat.name).join(', ')}
-                    </Text>
-                  </View>
-                )}
-
-                {restaurant?.location && (
-                  <View style={styles.infoItem}>
-                    <Ionicons name="location-outline" size={14} color={colors.text.primary} style={styles.infoIcon} />
-                    <Text style={[typography.bodyMedium, styles.infoText, { color: colors.text.secondary }]}>
-                      {restaurant.location}
-                    </Text>
-                  </View>
-                )}
-
-                {restaurant?.operating_hours && Object.keys(restaurant.operating_hours).length > 0 && (
-                  <View style={styles.infoItem}>
-                    <Ionicons name="time-outline" size={14} color={colors.text.primary} style={styles.infoIcon} />
-                    <Text style={[typography.bodyMedium, styles.infoText, { color: colors.text.secondary }]}>
-                      {Object.entries(restaurant.operating_hours)
-                        .map(([day, hours]) => `${day}: ${hours}`)
-                        .join('\n')}
-                    </Text>
-                  </View>
-                )}
-
-                {restaurant?.telephone && (
-                  <View style={styles.infoItem}>
-                    <Ionicons name="call-outline" size={14} color={colors.text.primary} style={styles.infoIcon} />
-                    <Text style={[typography.bodyMedium, styles.infoText, { color: colors.text.secondary }]}>
-                      {restaurant.telephone}
-                    </Text>
-                  </View>
-                )}
-              </View>
-           
-
-            <View style={styles.descriptionContainer}>
-              <Text 
-                style={[typography.bodyMedium, styles.description, { 
-                  color: colors.text.black, 
-                  width: '100%', 
-                  marginBottom: 10,
-                  textAlign: 'left',
-                  flexShrink: 1,
-                }]}
-                numberOfLines={0}
-                ellipsizeMode="clip"
-                adjustsFontSizeToFit={false}
-              >
-                {restaurant?.description}
-              </Text>
-            </View>
-          </View>
+         
 
             {restaurant?.promos?.length > 0 && (
               <>
@@ -289,7 +256,7 @@ export default function DetailScreen({ route, navigation }) {
                 
                 if (menuItems && menuItems.length > 0) {
                   return (
-                    <View key={cuisine.id} style={styles.menuSection}>
+                    <View key={cuisine.id}>
                       <Text style={[styles.cuisineTitle]}>{cuisine.name}</Text>
                       <MenuItems 
                         items={menuItems}
@@ -306,7 +273,7 @@ export default function DetailScreen({ route, navigation }) {
               {restaurant?.menus?.filter(
                 menu => !menu.category || !cuisines.some(cuisine => cuisine.id.toString() === menu.category.toString())
               ).length > 0 && (
-                <View style={styles.menuSection}>
+                <View >
                   <Text style={[styles.cuisineTitle]}>Other Items</Text>
                   <MenuItems 
                     items={restaurant.menus.filter(
@@ -357,14 +324,6 @@ const styles = StyleSheet.create({
     marginTop: -24,
     padding: 20,
     paddingTop: 24,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
     width: '100%',
     alignSelf: 'stretch',
   },
@@ -393,10 +352,10 @@ const styles = StyleSheet.create({
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
     borderRadius: 6,
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    gap: 4,
+    paddingVertical: 7,
   },
   ratingText: {
     marginLeft: 2,
@@ -434,14 +393,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   menuContainer: {
-    marginTop: 24,
+    marginTop: 12,
     paddingBottom: 100, // Add padding for the footer
   },
-  menuSection: {
-    marginBottom: 24,
-  },
   sectionTitle: {
-    marginBottom: 24,
+    marginBottom: 12,
     color: colors.text.primary,
   },
   cuisineTitle: {
@@ -496,7 +452,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   promosContainer: {
-    marginBottom: 24,
     marginLeft: -20,
     marginRight: -20,
   },
@@ -515,8 +470,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderColor: colors.border,
     borderWidth: 1,
-    width: 200,
-    minHeight: 120,
+    width: 180,
+    maxHeight: 80,
   },
   promoIconBackground: {
     position: 'absolute',
@@ -541,10 +496,10 @@ const styles = StyleSheet.create({
   discountText: {
     color: colors.success,
     fontFamily: 'PlusJakartaSans-Bold',
-    fontSize: 18,
+    fontSize: 16,
   },
   promoTitle: {
-    ...typography.bodyMedium,
+    ...typography.bodySmall,
     color: colors.text.secondary,
   },
 });

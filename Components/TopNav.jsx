@@ -11,6 +11,8 @@ import Animated, {
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { layout } from '../styles/layout';
+import React from 'react';
+import { useUserStore } from '../stores/userStore';
 
 const TopNav = ({ 
   handleGoBack, 
@@ -18,7 +20,11 @@ const TopNav = ({
   scrollY, 
   variant = 'transparent', 
   showBackButton = true, 
-  showBack = true 
+  showBack = true,
+  showActionButtons,
+  onInfoPress,
+  isFavorite,
+  onFavoritePress,
 }) => {
     if (variant === 'solid') {
         return (
@@ -47,12 +53,29 @@ const TopNav = ({
                                 {title}
                             </Text>
                         </View>
-                        <View style={styles.placeholder} />
+                        {showActionButtons ? (
+                            <View style={styles.actionButtonsContainer}>
+                                <View style={styles.actionButtons}>
+                                    <TouchableOpacity style={styles.actionButtonsTouchable} onPress={onInfoPress}>
+                                        <Ionicons name="information-circle-outline" size={24} color={colors.text.black} />
+                                    </TouchableOpacity>
+                                </View>
+                                <View style={styles.actionButtons}>
+                                    <TouchableOpacity style={styles.actionButtonsTouchable} onPress={onFavoritePress}>
+                                        <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={24} color={colors.error} />
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        ) : (
+                            <View style={styles.placeholder} />
+                        )}
                     </View>
                 </SafeAreaView>
             </View>
         );
     }
+
+    const user = useUserStore(state => state.user);
 
     const defaultScrollY = useSharedValue(0);
     const animValue = scrollY || defaultScrollY;
@@ -61,12 +84,12 @@ const TopNav = ({
         return {
             backgroundColor: interpolateColor(
                 animValue.value,
-                [0, 100],
+                [150, 180],
                 ['transparent', colors.background]
             ),
             borderBottomColor: interpolateColor(
                 animValue.value,
-                [0, 100],
+                [150, 180],
                 ['transparent', colors.border]
             ),
             borderBottomWidth: 1,
@@ -79,7 +102,7 @@ const TopNav = ({
         return {
             color: interpolateColor(
                 animValue.value,
-                [0, 100],
+                [150, 180],
                 [colors.text.white, colors.text.black]
             ),
         };
@@ -89,7 +112,7 @@ const TopNav = ({
         return {
             opacity: interpolate(
                 animValue.value,
-                [0, 100],
+                [150, 180],
                 [0, 1]
             ),
             color: colors.text.black,
@@ -100,7 +123,17 @@ const TopNav = ({
         return {
             backgroundColor: interpolateColor(
                 animValue.value,
-                [0, 100],
+                [150, 180],
+                ['rgba(0,0,0,0.5)', 'transparent']
+            ),
+        };
+    });
+
+    const actionButtonsStyle = useAnimatedStyle(() => {
+        return {
+            backgroundColor: interpolateColor(
+                animValue.value,
+                [150, 180],
                 ['rgba(0,0,0,0.5)', 'transparent']
             ),
         };
@@ -128,7 +161,30 @@ const TopNav = ({
                             {title}
                         </Animated.Text>
                     </Animated.View>
-                    <View style={styles.placeholder} />
+                    {showActionButtons && (
+                        <View style={styles.actionButtonsContainer}>
+                            <Animated.View style={[styles.actionButtons, actionButtonsStyle]}>
+                                <TouchableOpacity style={styles.actionButtonsTouchable} onPress={onInfoPress}>
+                                    <AnimatedIcon 
+                                        name="information-circle-outline" 
+                                        size={24} 
+                                        style={iconStyle}
+                                    />
+                                </TouchableOpacity>
+                            </Animated.View>
+                            {user && (
+                                <Animated.View style={[styles.actionButtons, actionButtonsStyle]}>
+                                    <TouchableOpacity style={styles.actionButtonsTouchable} onPress={onFavoritePress}>
+                                        <AnimatedIcon 
+                                            name={isFavorite ? "heart" : "heart-outline"} 
+                                            size={24} 
+                                            color={isFavorite ? colors.error : colors.text.black} 
+                                        />
+                                    </TouchableOpacity>
+                                </Animated.View>
+                            )}
+                        </View>
+                    )}
                 </View>
             </SafeAreaView>
         </Animated.View>
@@ -153,7 +209,8 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         paddingHorizontal: layout.spacing.md,
-        paddingBottom: 16,
+        paddingVertical: 8,
+        height: 56,
     },
     backButton: {
         borderRadius: 8,
@@ -161,9 +218,26 @@ const styles = StyleSheet.create({
     backButtonTouchable: {
         padding: 8,
     },
+    actionButtons: {
+        borderRadius: 8,
+    },
+    actionButtonsContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
+    actionButtonsTouchable: {
+        padding: 8,
+        borderRadius: 8,
+    },
     titleContainer: {
-        flex: 1,
+        position: 'absolute',
+        left: 0,
+        right: 0,
         alignItems: 'center',
+        zIndex: -1,
+        height: '100%',
+        justifyContent: 'center',
     },
     title: {
         color: colors.text.black,

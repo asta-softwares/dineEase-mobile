@@ -317,6 +317,27 @@ const authService = {
       return { success: true };
     }
   },
+
+  toggleFavorite: async (type, id) => {
+    try {
+      const payload = type === 'restaurant'
+        ? { restaurant: id }
+        : { menu: id };
+      
+      const response = await apiClient.post('/favorites/', payload);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  },
+
+  async addToFavorites(type, id) {
+    return this.toggleFavorite(type, id);
+  },
+
+  async removeFromFavorites(type, id) {
+    return this.toggleFavorite(type, id);
+  }
 };
 
 export default authService;

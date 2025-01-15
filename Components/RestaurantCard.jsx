@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { layout } from '../styles/layout';
+import { useUserStore } from '../stores/userStore';
 
 const RestaurantCard = ({ 
   name, 
@@ -15,8 +16,10 @@ const RestaurantCard = ({
   price,
   promos = [], 
   style = {},
-  isOpen = true 
+  isOpen = true,
+  isFavorite = false
 }) => {
+  const user = useUserStore(state => state.user);
   const firstPromo = promos?.[0];
   const additionalPromos = promos?.length > 1 ? promos.length - 1 : 0;
 
@@ -40,6 +43,11 @@ const RestaurantCard = ({
       <View style={styles.restaurantCard}>
         <View style={styles.imageContainer}>
           <Image source={{ uri: imageUrl }} style={styles.restaurantImage} />
+          {user && isFavorite && (
+            <View style={styles.favoriteContainer}>
+              <Ionicons name="heart" size={20} color={colors.error} />
+            </View>
+          )}
           {!isOpen ? (
             <View style={styles.closedBadge}>
               <Text style={styles.closedText}>Closed</Text>
@@ -112,6 +120,7 @@ RestaurantCard.propTypes = {
   promos: PropTypes.array,
   style: PropTypes.object,
   isOpen: PropTypes.bool,
+  isFavorite: PropTypes.bool,
 };
 
 const styles = StyleSheet.create({
@@ -194,6 +203,22 @@ const styles = StyleSheet.create({
     color: colors.text.white,
     fontSize: 12,
     fontWeight: '600',
+  },
+  favoriteContainer: {
+    position: 'absolute',
+    top: layout.spacing.sm,
+    left: layout.spacing.sm,
+    backgroundColor: colors.white,
+    padding: 6,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   restaurantInfo: {
     padding: layout.spacing.md,
