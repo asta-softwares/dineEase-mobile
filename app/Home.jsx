@@ -412,12 +412,14 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.scrollContent}>
             {!isSearching && (
               <>
-                <View style={styles.promoBanner}>
-                  <Image
-                    source={require('../assets/promo-banner.png')}
-                    style={styles.promoImage}
-                  />
-                </View>
+                {!selectedCategory && (
+                  <View style={styles.promoBanner}>
+                    <Image
+                      source={require('../assets/promo-banner.png')}
+                      style={styles.promoImage}
+                    />
+                  </View>
+                )}
                 <Text style={[{
                   fontFamily: 'PlusJakartaSans-Bold',
                   fontSize: 20,
@@ -445,33 +447,37 @@ export default function HomeScreen({ navigation }) {
                     </View>
                   ))}
                 </ScrollView>
-                <Text style={[{
-                  fontFamily: 'PlusJakartaSans-Bold',
-                  fontSize: 20,
-                  color: colors.text.primary,
-                  marginHorizontal: layout.spacing.md,
-                  marginBottom: layout.spacing.sm
-                }]}>
-                  Featured
-                </Text>
-                {featuredRestaurants.length > 0 && featuredRestaurants.map(group => (
-                  <View key={group.group} style={styles.featuredSection}>
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={styles.featuredScrollContent}
-                    >
-                      {group.restaurants.slice(0, 4).map((restaurant) => (
-                        <FeatureCard
-                          key={restaurant.id}
-                          restaurant={restaurant}
-                          onPress={() => handleDetail(restaurant)}
-                          disabled={!restaurant.is_open}
-                        />
-                      ))}
-                    </ScrollView>
-                  </View>
-                ))}
+                {!selectedCategory && featuredRestaurants.length > 0 && (
+                  <>
+                    <Text style={[{
+                      fontFamily: 'PlusJakartaSans-Bold',
+                      fontSize: 20,
+                      color: colors.text.primary,
+                      marginHorizontal: layout.spacing.md,
+                      marginBottom: layout.spacing.sm
+                    }]}>
+                      Featured
+                    </Text>
+                    {featuredRestaurants.map(group => (
+                      <View key={group.group} style={styles.featuredSection}>
+                        <ScrollView
+                          horizontal
+                          showsHorizontalScrollIndicator={false}
+                          contentContainerStyle={styles.featuredScrollContent}
+                        >
+                          {group.restaurants.slice(0, 4).map((restaurant) => (
+                            <FeatureCard
+                              key={restaurant.id}
+                              restaurant={restaurant}
+                              onPress={() => handleDetail(restaurant)}
+                              disabled={!restaurant.is_open}
+                            />
+                          ))}
+                        </ScrollView>
+                      </View>
+                    ))}
+                  </>
+                )}
                 <Text style={[{
                   fontFamily: 'PlusJakartaSans-Bold',
                   fontSize: 20,
