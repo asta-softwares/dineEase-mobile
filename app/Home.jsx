@@ -19,7 +19,7 @@ import {
   ImageBackground,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation, useNavigationState } from "@react-navigation/native";
+import { useNavigation, useNavigationState, useFocusEffect } from "@react-navigation/native";
 import { useFonts } from 'expo-font';
 import { PlusJakartaSans_400Regular, PlusJakartaSans_500Medium, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold } from '@expo-google-fonts/plus-jakarta-sans';
 import CuisinesCard from "../Components/CuisinesCard";
@@ -202,14 +202,16 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  useEffect(() => {
-    if (user) {
-      checkCart();
-    } else {
-      setHasCartItems(false);
-      setCartRestaurantId(null);
-    }
-  }, [user]);
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user) {
+        checkCart();
+      } else {
+        setHasCartItems(false);
+        setCartRestaurantId(null);
+      }
+    }, [user])
+  );
 
   useEffect(() => {
     fetchFeaturedRestaurants();
