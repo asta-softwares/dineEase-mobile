@@ -105,10 +105,14 @@ const ProfileScreen = () => {
             case 'Partnership':
                 await handleOpenURL('https://www.dineease.ca/partners');
                 break;
+            case 'Favorites':
+                navigation.navigate('Favorites');
+                break;
         }
     };
 
     const menuItems = [
+        ...(user ? [{ icon: 'heart-outline', label: 'Favorites' }] : []),
         { icon: 'help-circle-outline', label: 'Help / Contact Us' },
         { icon: 'people-outline', label: 'Partnership' },
     ];
