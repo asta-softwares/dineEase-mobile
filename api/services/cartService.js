@@ -89,6 +89,26 @@ export const cartService = {
       });
       throw new Error(errorMessage);
     }
+  },
+
+  getUserCart: async () => {
+    try {
+      const response = await apiClient.get('/carts/');
+      // API returns an array, get the most recent cart if exists
+      const carts = response.data;
+      return carts.length > 0 ? carts[0] : null;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error ||
+                          error.response?.data?.detail ||
+                          error.message;
+      console.error('Error getting user cart:', {
+        status: error.response?.status,
+        message: errorMessage,
+        data: error.response?.data
+      });
+      throw new Error(errorMessage);
+    }
   }
 };
 

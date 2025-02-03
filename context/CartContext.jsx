@@ -1,321 +1,146 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useState } from 'react';
+import cartService from '../api/services/cartService';
 import { useUserStore } from '../stores/userStore';
 
-const CartContext = createContext({
-  cart: { restaurantId: null, items: {}, promos: [], owner_id: null },
-  addToCart: () => {},
-  updateQuantity: () => {},
-  removeFromCart: () => {},
-  clearCart: () => {},
-  getTotalCost: () => {},
-  addPromo: () => {},
-  getItemQuantity: () => 0,
-  getTotalItems: () => 0,
-  getTotalCost: () => 0,
-  removePromo: () => {},
-  clearPromos: () => {},
-  getPromos: () => {},
-  validatePromo: () => {},
-  setOwner: () => {},
-});
+const CartContext = createContext();
 
-export const CartProvider = ({ children }) => {
-  const [cart, setCart] = useState({
-    restaurantId: null,
-    promos: [],
-    items: {},  // { itemId: { item: {}, quantity: number } }
-    owner_id: null,
-  });
-  const [lastUserId, setLastUserId] = useState(null);
-  const user = useUserStore((state) => state.user);
+export function CartProvider({ children }) {
+  const [cart, setCart] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const { user } = useUserStore();
 
-  useEffect(() => {
-    if (!user) {
-      // Clear cart when user logs out
-      handleClearCart();
-      setLastUserId(null);
-    } else if (user.id !== lastUserId) {
-      // Clear cart when different user logs in
-      handleClearCart();
-      setLastUserId(user.id);
-    } else {
-      // Load cart for current user
-      loadCart();
-    }
-  }, [user]);
-
-  const loadCart = async () => {
+  const createNewCart = async (restaurantId, item) => {
     try {
-      if (!user) return;
-      
-      const cartKey = `cart_${user.id}`;
-      const savedCart = await AsyncStorage.getItem(cartKey);
-      if (savedCart) {
-        setCart(JSON.parse(savedCart));
-      }
+      setLoading(true);
+      const cartData = {
+        restaurant: restaurantId,
+        items: [{
+          menu: item.id,
+          quantity: 1,
+          addons: item.selectedAddons || []
+        }]
+      };
+      const newCart = await cartService.createCart(cartData);
+      setCart(newCart);
+      return newCart;
     } catch (error) {
-      console.error('Error loading cart:', error);
-    }
-  };
-
-  const saveCart = async (newCart) => {
-    try {
-      if (!user) return;
-      
-      const cartKey = `cart_${user.id}`;
-      await AsyncStorage.setItem(cartKey, JSON.stringify(newCart));
-    } catch (error) {
-      console.error('Error saving cart:', error);
-    }
-  };
-
-  const handleClearCart = async () => {
-    const emptyCart = {
-      restaurantId: null,
-      promos: [],
-      items: {},
-      owner_id: null,
-    };
-    setCart(emptyCart);
-    
-    if (lastUserId) {
-      try {
-        const cartKey = `cart_${lastUserId}`;
-        await AsyncStorage.removeItem(cartKey);
-      } catch (error) {
-        console.error('Error clearing cart from storage:', error);
-      }
-    }
-  };
-
-  const setOwner = (ownerId) => {
-    setCart(prevCart => {
-      const newCart = {
-        ...prevCart,
-        owner_id: ownerId
-      };
-      saveCart(newCart);
-      return newCart;
-    });
-  };
-
-  const addToCart = (restaurantId, item, quantity) => {
-    setCart(prevCart => {
-      // If different restaurant, clear cart
-      if (prevCart.restaurantId && prevCart.restaurantId !== restaurantId) {
-        const newCart = {
-          restaurantId,
-          items: quantity > 0 ? { [item.id]: { item, quantity } } : {},
-          promos: [],
-          owner_id: null // Reset owner when changing restaurant
-        };
-        saveCart(newCart);
-        return newCart;
-      }
-
-      // Update existing cart
-      const newCart = {
-        ...prevCart,
-        restaurantId,
-        items: {
-          ...prevCart.items,
-          [item.id]: {
-            item,
-            quantity
-          }
-        }
-      };
-
-      // Remove item if quantity is 0
-      if (quantity === 0) {
-        delete newCart.items[item.id];
-      }
-
-      // If cart is empty, clear restaurant ID and owner
-      if (Object.keys(newCart.items).length === 0) {
-        newCart.restaurantId = null;
-        newCart.owner_id = null;
-      }
-
-      saveCart(newCart);
-      return newCart;
-    });
-  };
-
-  const updateQuantity = (itemId, quantity) => {
-    setCart(prevCart => {
-      const newCart = {
-        ...prevCart,
-        items: {
-          ...prevCart.items,
-        }
-      };
-
-      if (quantity > 0) {
-        newCart.items[itemId] = {
-          ...prevCart.items[itemId],
-          quantity
-        };
-      } else {
-        delete newCart.items[itemId];
-      }
-
-      // If cart is empty, clear restaurant ID and owner
-      if (Object.keys(newCart.items).length === 0) {
-        newCart.restaurantId = null;
-        newCart.owner_id = null;
-      }
-
-      saveCart(newCart);
-      return newCart;
-    });
-  };
-
-  const removeFromCart = (itemId) => {
-    setCart(prevCart => {
-      const newItems = { ...prevCart.items };
-      delete newItems[itemId];
-      const newCart = {
-        ...prevCart,
-        items: newItems
-      };
-      saveCart(newCart);
-      return newCart;
-    });
-  };
-
-  const updatePromos = (promos) => {
-    setCart(prevCart => {
-      const newCart = {
-        ...prevCart,
-        promos
-      };
-      saveCart(newCart);
-      return newCart;
-    });
-  };
-
-  const addPromo = async (promoId, orderTotal) => {
-    try {
-      if (!cart.restaurantId) {
-        throw new Error('No restaurant selected');
-      }
-
-      // Validate promo with restaurant service
-      const promos = await restaurantService.getOrderPromos(cart.restaurantId, orderTotal);
-      const validPromo = promos.find(promo => promo.id === promoId);
-
-      if (!validPromo) {
-        throw new Error('Invalid promo code for this restaurant');
-      }
-
-      setCart(prevCart => {
-        const newPromos = [...prevCart.promos];
-        if (!newPromos.includes(promoId)) {
-          newPromos.push(promoId);
-        }
-        const newCart = {
-          ...prevCart,
-          promos: newPromos
-        };
-        saveCart(newCart);
-        return newCart;
-      });
-
-      return validPromo;
-    } catch (error) {
-      console.error('Error adding promo:', error);
+      console.error('Error creating cart:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const validatePromo = async (promoId, orderTotal) => {
+  const updateCartItem = async (item) => {
+    if (!cart) {
+      throw new Error('No active cart');
+    }
+
     try {
-      if (!cart.restaurantId) {
-        throw new Error('No restaurant selected');
-      }
-
-      const promos = await restaurantService.getOrderPromos(cart.restaurantId, orderTotal);
-      return promos.find(promo => promo.id === promoId);
+      setLoading(true);
+      const cartData = {
+        items: [{
+          menu: item.id,
+          quantity: 1,
+          addons: item.selectedAddons || []
+        }]
+      };
+      const updatedCart = await cartService.updateCart(cart.id, cartData);
+      setCart(updatedCart);
+      return updatedCart;
     } catch (error) {
-      console.error('Error validating promo:', error);
+      console.error('Error updating cart:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const removePromo = (promoId) => {
-    setCart(prevCart => {
-      const newPromos = prevCart.promos.filter(id => id !== promoId);
-      const newCart = {
-        ...prevCart,
-        promos: newPromos
-      };
-      saveCart(newCart);
-      return newCart;
-    });
-  };
+  const removeItem = async (itemId) => {
+    if (!cart) {
+      throw new Error('No active cart');
+    }
 
-  const clearPromos = () => {
-    setCart(prevCart => {
-      const newCart = {
-        ...prevCart,
-        promos: []
-      };
-      saveCart(newCart);
-      return newCart;
-    });
-  };
-
-  const getPromos = () => {
-    return cart.promos;
+    try {
+      setLoading(true);
+      const updatedCart = await cartService.deleteItemCart(cart.id, itemId);
+      setCart(updatedCart);
+      return updatedCart;
+    } catch (error) {
+      console.error('Error removing item from cart:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const clearCart = async () => {
-    await handleClearCart();
+    if (!cart) return;
+
+    try {
+      setLoading(true);
+      await cartService.deleteCart(cart.id);
+      setCart(null);
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getItemQuantity = (itemId) => {
-    return cart.items[itemId]?.quantity || 0;
+  const addToCart = async (restaurantId, item) => {
+    if (!user) {
+      throw new Error('User must be logged in to add items to cart');
+    }
+
+    try {
+      if (!cart || cart.restaurant !== restaurantId) {
+        return await createNewCart(restaurantId, item);
+      } else {
+        return await updateCartItem(item);
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      throw error;
+    }
   };
 
   const getTotalItems = () => {
-    if (!cart.items || Object.keys(cart.items).length === 0) return 0;
-    return Object.values(cart.items).reduce((sum, { quantity }) => sum + quantity, 0);
+    if (!cart || !cart.items) return 0;
+    return cart.items.reduce((total, item) => total + item.quantity, 0);
   };
 
   const getTotalCost = () => {
-    if (!cart.items || Object.keys(cart.items).length === 0) return 0;
-    return Object.values(cart.items).reduce((total, { item, quantity }) => total + (item.discounted_cost * quantity), 0);
+    if (!cart || !cart.items) return 0;
+    return cart.items.reduce((total, item) => {
+      const itemCost = item.menu.cost * item.quantity;
+      const addonsCost = (item.addons || []).reduce((acc, addon) => acc + addon.cost, 0);
+      return total + itemCost + (addonsCost * item.quantity);
+    }, 0);
   };
 
   return (
-    <CartContext.Provider value={{
-      cart,
-      addToCart,
-      updateQuantity,
-      removeFromCart,
-      clearCart,
-      getTotalCost,
-      addPromo,
-      getItemQuantity,
-      getTotalItems,
-      getTotalCost,
-      removePromo,
-      clearPromos,
-      getPromos,
-      validatePromo,
-      setOwner,
-    }}>
+    <CartContext.Provider
+      value={{
+        cart,
+        loading,
+        addToCart,
+        removeItem,
+        clearCart,
+        getTotalItems,
+        getTotalCost,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
-};
+}
 
-export const useCart = () => {
+export function useCart() {
   const context = useContext(CartContext);
   if (!context) {
     throw new Error('useCart must be used within a CartProvider');
   }
   return context;
-};
+}

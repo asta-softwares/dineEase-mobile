@@ -33,6 +33,7 @@ import { restaurantService } from '../api/services/restaurantService';
 import { useUserStore } from '../stores/userStore';
 import * as Location from 'expo-location';
 import authService from "../api/services/authService";
+import cartService from "../api/services/cartService";
 
 export default function HomeScreen({ navigation }) {
   const [fontsLoaded] = useFonts({
@@ -54,6 +55,8 @@ export default function HomeScreen({ navigation }) {
   const scrollY = useRef(new Animated.Value(0)).current;
   const { user } = useUserStore();
   const [locationPermission, setLocationPermission] = useState(null);
+  const [hasCartItems, setHasCartItems] = useState(false);
+  const [cartRestaurantId, setCartRestaurantId] = useState(null);
 
   const [nextPage, setNextPage] = useState(null);
   const [hasMore, setHasMore] = useState(true);
@@ -75,7 +78,7 @@ export default function HomeScreen({ navigation }) {
   const handleDetail = (restaurant) => {
     navigation.navigate("Details", { 
       restaurantId: restaurant.id, 
-      isDineIn: isDineIn 
+      isDineIn: isDineIn,
     });
   };
 
@@ -186,6 +189,27 @@ export default function HomeScreen({ navigation }) {
       console.error('Error fetching featured restaurants:', error);
     }
   };
+
+  const checkCart = async () => {
+    try {
+      const cart = await cartService.getUserCart();
+      setHasCartItems(cart?.items?.length > 0);
+      setCartRestaurantId(cart?.restaurant);
+    } catch (error) {
+      console.error('Error checking cart:', error);
+      setHasCartItems(false);
+      setCartRestaurantId(null);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      checkCart();
+    } else {
+      setHasCartItems(false);
+      setCartRestaurantId(null);
+    }
+  }, [user]);
 
   useEffect(() => {
     fetchFeaturedRestaurants();
@@ -334,10 +358,24 @@ export default function HomeScreen({ navigation }) {
                 />
               </View>
               <TouchableOpacity 
-                onPress={() => user && navigation.navigate('OrdersScreen')}
-               
+                onPress={() => {
+                  if (!user) return;
+                  navigation.navigate('Checkout', { 
+                    restaurantId: cartRestaurantId || null,
+                    isDineIn: isDineIn 
+                  });
+                }}
+                style={styles.cartButton}
               >
-                <Ionicons name="bag-outline" size={24} color={colors.text.black}  opacity={user ? 1 : 0}/>
+                <Ionicons 
+                  name="bag-outline" 
+                  size={24} 
+                  color={colors.text.black} 
+                  opacity={user ? 1 : 0}
+                />
+                {hasCartItems && (
+                  <View style={styles.cartIndicator} />
+                )}
               </TouchableOpacity>
             </Animated.View>
 
@@ -369,9 +407,17 @@ export default function HomeScreen({ navigation }) {
                 ]}
                 onPress={() => setIsDineIn(true)}
               >
-                <Text style={[styles.switchText, isDineIn && styles.activeText]}>
-                  Dine in
-                </Text>
+                <View style={styles.switchButtonContent}>
+                  <Ionicons 
+                    name="restaurant-outline" 
+                    size={20} 
+                    color={isDineIn ? colors.white : colors.text.primary} 
+                    style={styles.switchButtonIcon}
+                  />
+                  <Text style={[styles.switchText, isDineIn && styles.activeText]}>
+                    Dine in
+                  </Text>
+                </View>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
@@ -380,9 +426,17 @@ export default function HomeScreen({ navigation }) {
                 ]}
                 onPress={() => setIsDineIn(false)}
               >
-                <Text style={[styles.switchText, !isDineIn && styles.activeText]}>
-                 Take out
-                </Text>
+                <View style={styles.switchButtonContent}>
+                  <Ionicons 
+                    name="bag-handle-outline" 
+                    size={20} 
+                    color={!isDineIn ? colors.white : colors.text.primary} 
+                    style={styles.switchButtonIcon}
+                  />
+                  <Text style={[styles.switchText, !isDineIn && styles.activeText]}>
+                    Takeaway
+                  </Text>
+                </View>
               </TouchableOpacity>
             </Animated.View>
             </SafeAreaView>
@@ -594,6 +648,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.text.primary,
   },
+  switchButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  switchButtonIcon: {
+    marginRight: 8,
+  },
   activeButton: {
     backgroundColor: colors.text.primary,
     borderWidth: 0,
@@ -652,5 +714,18 @@ const styles = StyleSheet.create({
   },
   featuredScrollContent: {
     paddingHorizontal: layout.spacing.md,
+  },
+  cartButton: {
+    position: 'relative',
+    padding: 4,
+  },
+  cartIndicator: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.error,
   },
 });
