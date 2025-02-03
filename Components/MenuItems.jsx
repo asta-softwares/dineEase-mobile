@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   },
   menuItemSelected: {
     borderColor: colors.primary,
-    borderWidth: 2,
+    borderWidth: 4,
   },
   image: {
     width: '100%',

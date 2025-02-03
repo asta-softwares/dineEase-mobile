@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   contentPadding: {
-    paddingTop: Platform.OS === 'ios' ? 140 : 140,
+    paddingTop: Platform.OS === 'ios' ? 120 : 120,
   },
   section: {
     backgroundColor: colors.white,

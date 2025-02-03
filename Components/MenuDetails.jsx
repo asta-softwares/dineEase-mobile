@@ -33,13 +33,13 @@ const MenuDetails = ({ route, navigation }) => {
   });
   const imageUrl = item?.images?.[0]?.image || 'https://via.placeholder.com/400';
   const cartItem = cart?.items?.find(i => i.menu === item.id);
+  const isAuth = useUserStore.getState().isAuthenticated();
 
   const handleQuantityChange = (newQuantity) => {
     setQuantity(newQuantity);
   };
 
   const handleAddToCart = async () => {
-    const isAuth = useUserStore.getState().isAuthenticated();
     if (!isAuth) {
       navigation.navigate('Login');
       return;
@@ -74,21 +74,26 @@ const MenuDetails = ({ route, navigation }) => {
         <Text style={[typography.h2, styles.name]}>{item.name}</Text>
         <Text style={[typography.bodyLarge, styles.description]}>{item.description}</Text>
         <Text style={[typography.h3, styles.price]}>${item.cost}</Text>
-
+  
         <View style={styles.footer}>
-          <QuantitySelector
-            quantity={quantity}
-            onIncrease={() => handleQuantityChange(quantity + 1)}
-            onDecrease={() => handleQuantityChange(Math.max(0, quantity - 1))}
-          />
-          <TouchableOpacity 
-            style={[styles.addToCartButton, styles.addButton]}
-            onPress={handleAddToCart}
-          >
-            <Text style={styles.addButtonText}>
-              {quantity === 0 ? 'Remove' : 'Add to Cart'}
-            </Text>
-          </TouchableOpacity>
+        {isAuth && (
+          <>
+            <QuantitySelector
+              quantity={quantity}
+              onIncrease={() => handleQuantityChange(quantity + 1)}
+              onDecrease={() => handleQuantityChange(Math.max(0, quantity - 1))}
+            />
+      
+            <TouchableOpacity 
+              style={[styles.addToCartButton, styles.addButton]}
+              onPress={handleAddToCart}
+            >
+              <Text style={styles.addButtonText}>
+                {quantity === 0 ? 'Remove' : 'Add to Cart'}
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
         </View>
       </View>
     </View>

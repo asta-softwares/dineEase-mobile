@@ -163,6 +163,17 @@ const TopNav = ({
                     </Animated.View>
                     {showActionButtons && (
                         <View style={styles.actionButtonsContainer}>
+                            {user && (
+                                <Animated.View style={[styles.actionButtons, actionButtonsStyle]}>
+                                    <TouchableOpacity style={styles.actionButtonsTouchable} onPress={onFavoritePress}>
+                                        <AnimatedIcon 
+                                            name={isFavorite ? "heart" : "heart-outline"} 
+                                            size={24} 
+                                            style={isFavorite ? { color: colors.error } : iconStyle}
+                                        />
+                                    </TouchableOpacity>
+                                </Animated.View>
+                            )}
                             <Animated.View style={[styles.actionButtons, actionButtonsStyle]}>
                                 <TouchableOpacity style={styles.actionButtonsTouchable} onPress={onInfoPress}>
                                     <AnimatedIcon 
@@ -172,17 +183,6 @@ const TopNav = ({
                                     />
                                 </TouchableOpacity>
                             </Animated.View>
-                            {user && (
-                                <Animated.View style={[styles.actionButtons, actionButtonsStyle]}>
-                                    <TouchableOpacity style={styles.actionButtonsTouchable} onPress={onFavoritePress}>
-                                        <AnimatedIcon 
-                                            name={isFavorite ? "heart" : "heart-outline"} 
-                                            size={24} 
-                                            color={isFavorite ? colors.error : colors.text.black} 
-                                        />
-                                    </TouchableOpacity>
-                                </Animated.View>
-                            )}
                         </View>
                     )}
                 </View>
@@ -200,6 +200,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 1,
+        paddingTop:  Platform.OS === 'ios' ? 0 : 16,
     },
     safeArea: {
         backgroundColor: 'transparent',

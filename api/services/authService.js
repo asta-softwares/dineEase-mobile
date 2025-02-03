@@ -324,20 +324,17 @@ const authService = {
         ? { restaurant: id }
         : { menu: id };
       
-      const response = await apiClient.post('/favorites/', payload);
+      let response;
+      if (id) {
+        response = await apiClient.post(`/favorites/${id}/remove/`, payload);
+      } else {
+        response = await apiClient.post('/favorites/', payload);
+      }
       return response.data;
     } catch (error) {
       throw this.handleError(error);
     }
   },
-
-  async addToFavorites(type, id) {
-    return this.toggleFavorite(type, id);
-  },
-
-  async removeFromFavorites(type, id) {
-    return this.toggleFavorite(type, id);
-  }
 };
 
 export default authService;

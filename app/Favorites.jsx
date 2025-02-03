@@ -127,10 +127,9 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
-    marginTop: 100,
+    marginTop: 60,
   },
   emptyText: {
     color: colors.text.primary,

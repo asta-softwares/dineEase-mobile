@@ -6,10 +6,20 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY":"pk_test_51QMpBEAECjFQcoAiIBBR2ytlseH5Ztrp19gx9RWhTox7fzADahNcnjrnyLz0a4N3cv0xp63wx2daPuf3TXWaBSRE00muGzaBD0",
+        "EXPO_PUBLIC_MERCHANT_IDENTIFIER":"merchant.ca.dineease.app"
+
+      }
     },
     "preview": {
       "distribution": "store",
+      "env": {
+        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY":"pk_test_51QMpBEAECjFQcoAiIBBR2ytlseH5Ztrp19gx9RWhTox7fzADahNcnjrnyLz0a4N3cv0xp63wx2daPuf3TXWaBSRE00muGzaBD0",
+        "EXPO_PUBLIC_MERCHANT_IDENTIFIER":"merchant.ca.dineease.app"
+
+      },
       "android": {
         "buildType": "app-bundle"
       },

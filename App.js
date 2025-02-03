@@ -35,8 +35,10 @@ import { setupNotificationListeners, registerForPushNotificationsAsync } from '.
 import authService from './api/services/authService';
 import SearchScreen from './app/Search';
 import MenuDetailsScreen from './Components/MenuDetails';
+import RestaurantInfo from './app/RestaurantInfo';
 import { Ionicons } from '@expo/vector-icons';
 import { setNavigationRef } from './api/client';
+import Favorites from './app/Favorites';
 // Initialize reanimated
 import 'react-native-reanimated';
 
@@ -78,8 +80,8 @@ function TabNavigator() {
         tabBarStyle: {
           borderTopWidth: 1,
           borderTopColor: colors.border,
-          height: Platform.OS === 'ios' ? 85 : 70,
-          paddingBottom: Platform.OS === 'ios' ? 25 : 12,
+          height: 85,
+          paddingBottom: 25,
           paddingTop: 8,
           backgroundColor: colors.white,
           position: 'absolute',
@@ -305,6 +307,20 @@ export default function App() {
                   animation: "slide_from_bottom",
                   sheetGrabberVisible: true,
                 }}
+              />
+              <Stack.Screen 
+                name="RestaurantInfo" 
+                component={RestaurantInfo}
+                options={{
+                  presentation: "formSheet",
+                  headerShown: false,
+                   animation: "slide_from_bottom",
+                  sheetGrabberVisible: true,
+                }}
+              />
+               <Stack.Screen 
+                name="Favorites" 
+                component={Favorites}
               />
             </Stack.Navigator>
           </NavigationContainer>

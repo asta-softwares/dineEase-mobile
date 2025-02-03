@@ -73,24 +73,6 @@ export const cartService = {
     }
   },
 
-  getCart: async (cartId) => {
-    try {
-      const response = await apiClient.get(`/carts/${cartId}/`);
-      return response.data;
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.error ||
-                          error.response?.data?.detail ||
-                          error.message;
-      console.error('Error getting cart:', {
-        status: error.response?.status,
-        message: errorMessage,
-        data: error.response?.data
-      });
-      throw new Error(errorMessage);
-    }
-  },
-
   getUserCart: async () => {
     try {
       const response = await apiClient.get('/carts/');

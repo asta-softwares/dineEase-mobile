@@ -69,7 +69,7 @@ export default function DetailScreen({ route, navigation }) {
   useEffect(() => {
     const fetchCart = async () => {
       try {
-        const cartData = await cartService.getCart(restaurantId);
+        const cartData = await cartService.getUserCart();
         setCart(cartData);
       } catch (error) {
         console.error('Error fetching cart:', error);
@@ -93,10 +93,10 @@ export default function DetailScreen({ route, navigation }) {
   const handleFavoriteToggle = async () => {
     try {
       const newFavoriteStatus = !isFavorite;
-      setIsFavorite(newFavoriteStatus); // Optimistic update
-      await authService.toggleFavorite('restaurant', restaurantId);
+      setIsFavorite(newFavoriteStatus); 
+      await authService.toggleFavorite('restaurant', restaurantId, );
     } catch (error) {
-      setIsFavorite(!isFavorite); // Revert on error
+      setIsFavorite(!isFavorite); 
       Alert.alert('Error', 'Failed to update favorite status');
       console.error('Error updating favorite:', error);
     }
@@ -277,13 +277,15 @@ export default function DetailScreen({ route, navigation }) {
                         style={styles.promoCard}
                       >
                         <View style={styles.promoIconBackground}>
-                          <Text style={[styles.backgroundIconText, { opacity: 0.15 }]}>
-                            {promo.discount_type === 'percentage' ? '%' : '$'}
-                          </Text>
+                          <Ionicons 
+                            name='pricetag'  
+                            style={[styles.backgroundIconText, { opacity: 0.15 }]}
+                          />
                         </View>
                         <View style={styles.promoContent}>
                           <View style={styles.discountContainer}>
                             <Text style={styles.discountText}>
+                            <Ionicons name='pricetag'   size={16} />
                               {promo.discount_type === 'percentage' 
                                 ? `${promo.discount}% OFF`
                                 : `$${promo.discount} OFF`}
@@ -528,8 +530,8 @@ const styles = StyleSheet.create({
   },
   promoIconBackground: {
     position: 'absolute',
-    bottom: -25,
-    right: -25,
+    bottom: -20,
+    right: 10,
     zIndex: 0,
     transform: [{ rotate: '-10deg' }],
   },
@@ -539,8 +541,7 @@ const styles = StyleSheet.create({
     width: '85%',
   },
   backgroundIconText: {
-    fontSize: 120,
-    fontWeight: 'bold',
+    fontSize: 80,
     color: colors.success,
   },
   promoIcon: {
