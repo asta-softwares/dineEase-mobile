@@ -72,7 +72,7 @@ const TotalRow = ({ label, value, isTotal, type }) => {
 };
 
 const CheckoutScreen = ({ route, navigation }) => {
-  const { restaurantId, isDineIn } = route.params;
+  const { restaurantId, isDineIn: initialIsDineIn } = route.params;
   const user = useUserStore((state) => state.user);
   const [cart, setCart] = useState(null);
   const [restaurant, setRestaurant] = useState(null);
@@ -85,6 +85,7 @@ const CheckoutScreen = ({ route, navigation }) => {
   const [availablePromos, setAvailablePromos] = useState([]);
   const [selectedPromos, setSelectedPromos] = useState([]);
   const [showPromoDropdown, setShowPromoDropdown] = useState(false);
+  const [isDineIn, setIsDineIn] = useState(initialIsDineIn);
   const { initPaymentSheet, presentPaymentSheet, retrievePaymentIntent } = useStripe();
 
   const getTotalCost = () => {
@@ -316,7 +317,7 @@ const CheckoutScreen = ({ route, navigation }) => {
       <View style={[styles.container, styles.centerContent]}>
         <TopNav 
           handleGoBack={() => navigation.goBack()} 
-          title="Checkout" 
+          title="Cart" 
           variant="solid"
           showBack={true}
         />
@@ -330,7 +331,7 @@ const CheckoutScreen = ({ route, navigation }) => {
       <View style={styles.container}>
         <TopNav 
           handleGoBack={() => navigation.goBack()} 
-          title="Checkout" 
+          title="Cart" 
           variant="solid"
           showBack={true}
         />
@@ -347,7 +348,7 @@ const CheckoutScreen = ({ route, navigation }) => {
     <View style={styles.container}>
       <TopNav 
         handleGoBack={() => navigation.goBack()} 
-        title="Checkout" 
+        title="Cart" 
         variant="solid"
         showBack={true}
       />
@@ -357,12 +358,49 @@ const CheckoutScreen = ({ route, navigation }) => {
         contentContainerStyle={[styles.contentContainer, styles.contentPadding]}
         showsVerticalScrollIndicator={false}
       >
+        {/* Order Type Tabs */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity 
+            style={[styles.tab, isDineIn && styles.activeTab]}
+            onPress={() => setIsDineIn(true)}
+          >
+            <Ionicons 
+              name="restaurant-outline" 
+              size={20} 
+              color={isDineIn ? colors.primary : colors.text.secondary} 
+            />
+            <Text style={[
+              typography.bodyMedium, 
+              styles.tabText,
+              isDineIn && styles.activeTabText
+            ]}>
+              Dine In
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.tab, !isDineIn && styles.activeTab]}
+            onPress={() => setIsDineIn(false)}
+          >
+            <Ionicons 
+              name="bag-handle-outline" 
+              size={20} 
+              color={!isDineIn ? colors.primary : colors.text.secondary} 
+            />
+            <Text style={[
+              typography.bodyMedium, 
+              styles.tabText,
+              !isDineIn && styles.activeTabText
+            ]}>
+              Takeaway
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Restaurant Information */}
         <View style={styles.section}>
           <View style={styles.restaurantHeader}>
             <View style={styles.restaurantInfo}>
-              <Text style={[typography.titleMedium, { color: colors.text.primary }]}>
+              <Text style={[typography.h3, { color: colors.text.black }]}>
                 {restaurant?.name}
               </Text>
               <Text style={[typography.bodyMedium, { color: colors.text.secondary }]}>
@@ -379,7 +417,7 @@ const CheckoutScreen = ({ route, navigation }) => {
 
         {/* Coupon Section */}
         <View style={styles.section}>
-          <Text style={[typography.titleMedium, styles.sectionTitle]}>Promo Codes</Text>
+          <Text style={[typography.h3, styles.sectionTitle]}>Promo Codes</Text>
           
           {/* Selected Promos */}
           {selectedPromos.length > 0 && (
@@ -446,7 +484,17 @@ const CheckoutScreen = ({ route, navigation }) => {
 
         {/* Order Summary */}
         <View style={styles.section}>
-          <Text style={[typography.titleMedium, styles.sectionTitle]}>Order Summary</Text>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={[typography.h3, styles.sectionTitle]}>Order Summary</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Details', { 
+                restaurantId: restaurantId,
+                isDineIn: isDineIn 
+              })}
+            >
+              <Text style={styles.editLink}>Edit Items</Text>
+            </TouchableOpacity>
+          </View>
           {cart.items.map((item, index) => (
             <CartItem key={index} item={item} quantity={item.quantity} />
           ))}
@@ -481,7 +529,7 @@ const CheckoutScreen = ({ route, navigation }) => {
 
         {/* Payment Information */}
         <View style={styles.section}>
-          <Text style={[typography.titleMedium, styles.sectionTitle]}>Payment Information</Text>
+          <Text style={[typography.h3, styles.sectionTitle]}>Payment Information</Text>
           <View style={styles.paymentInfo}>
             <Text style={[typography.bodyMedium, { color: colors.text.secondary }]}>
               Payment will be processed for:
@@ -531,6 +579,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   sectionTitle: {
     marginBottom: 16,
@@ -637,6 +687,44 @@ const styles = StyleSheet.create({
   centerContent: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    gap: 8,
+    borderRadius: 8,
+  },
+  activeTab: {
+    backgroundColor: colors.primary + '10',
+  },
+  tabText: {
+    color: colors.text.secondary,
+  },
+  activeTabText: {
+    color: colors.primary,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  editLink: {
+    ...typography.bodyMedium,
+    color: colors.primary,
+    textDecorationLine: 'underline',
   },
 });
 
