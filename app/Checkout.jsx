@@ -22,6 +22,7 @@ import Footer from './Layout/Footer';
 import LargeButton from '../Components/Buttons/LargeButton';
 import { useStripe } from '@stripe/stripe-react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 
 const CartItem = ({ item, quantity }) => (
   <View style={styles.orderItem}>
@@ -97,32 +98,36 @@ const CheckoutScreen = ({ route, navigation }) => {
 
   const subtotal = getTotalCost();
 
-  useEffect(() => {
-    const loadCartAndRestaurant = async () => {
-      try {
-        setInitialLoading(true);
-        // Load restaurant first to get owner ID
-        const restaurantData = await restaurantService.getRestaurantById(restaurantId);
-        setRestaurant(restaurantData);
-        
-        // Load cart with restaurant owner ID
-        const cartData = await cartService.getCart(restaurantId);
-        if (cartData) {
-          setCart({
-            ...cartData,
-            owner_id: restaurantData.owner
-          });
-        }
-      } catch (error) {
-        console.error('Error loading data:', error);
-        Alert.alert('Error', 'Failed to load cart or restaurant data');
-        navigation.goBack();
-      } finally {
-        setInitialLoading(false);
+  const loadCartAndRestaurant = async () => {
+    try {
+      setInitialLoading(true);
+      // Load restaurant first to get owner ID
+      const restaurantData = await restaurantService.getRestaurantById(restaurantId);
+      setRestaurant(restaurantData);
+      
+      // Load cart with restaurant owner ID
+      const cartData = await cartService.getUserCart();
+      if (cartData) {
+        setCart({
+          ...cartData,
+          owner_id: restaurantData.owner
+        });
       }
-    };
-    loadCartAndRestaurant();
-  }, [restaurantId]);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      Alert.alert('Error', 'Failed to load cart or restaurant data');
+      navigation.goBack();
+    } finally {
+      setInitialLoading(false);
+    }
+  };
+
+  // Reload cart data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadCartAndRestaurant();
+    }, [restaurantId])
+  );
 
   useEffect(() => {
     const calculateOrderTotal = async () => {
