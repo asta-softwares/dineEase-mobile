@@ -163,7 +163,7 @@ const TopNav = ({
                     </Animated.View>
                     {showActionButtons && (
                         <View style={styles.actionButtonsContainer}>
-                            {user && (
+                            {/* {user && (
                                 <Animated.View style={[styles.actionButtons, actionButtonsStyle]}>
                                     <TouchableOpacity style={styles.actionButtonsTouchable} onPress={onFavoritePress}>
                                         <AnimatedIcon 
@@ -173,7 +173,7 @@ const TopNav = ({
                                         />
                                     </TouchableOpacity>
                                 </Animated.View>
-                            )}
+                            )} */}
                             <Animated.View style={[styles.actionButtons, actionButtonsStyle]}>
                                 <TouchableOpacity style={styles.actionButtonsTouchable} onPress={onInfoPress}>
                                     <AnimatedIcon 
