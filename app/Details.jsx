@@ -29,6 +29,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import authService from '../api/services/authService';
 import cartService from '../api/services/cartService';
 import { Alert } from 'react-native';
+import { useUserStore } from '../stores/userStore';
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 
@@ -43,6 +44,7 @@ export default function DetailScreen({ route, navigation }) {
   const [cuisines, setCuisines] = useState([]);
   const [cart, setCart] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const user = useUserStore(state => state.user);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -68,6 +70,10 @@ export default function DetailScreen({ route, navigation }) {
 
   useEffect(() => {
     const fetchCart = async () => {
+      if (!user) {
+        setCart(null);
+        return;
+      }
       try {
         const cartData = await cartService.getUserCart();
         setCart(cartData);
@@ -76,7 +82,7 @@ export default function DetailScreen({ route, navigation }) {
       }
     };
     fetchCart();
-  }, [restaurantId]);
+  }, [restaurantId, user]);
 
   const getTotalItems = () => {
     'worklet';
@@ -91,15 +97,69 @@ export default function DetailScreen({ route, navigation }) {
   };
 
   const handleFavoriteToggle = async () => {
+    if (!user) {
+      navigation.navigate('Login');
+      return;
+    }
     try {
       const newFavoriteStatus = !isFavorite;
       setIsFavorite(newFavoriteStatus); 
-      await authService.toggleFavorite('restaurant', restaurantId, );
+      await authService.toggleFavorite('restaurant', restaurantId);
     } catch (error) {
       setIsFavorite(!isFavorite); 
       Alert.alert('Error', 'Failed to update favorite status');
       console.error('Error updating favorite:', error);
     }
+  };
+
+  const handleAddToCart = async (item, quantity) => {
+    if (!user) {
+      navigation.navigate('Login');
+      return;
+    }
+    try {
+      const cartData = {
+        restaurant: restaurantId,
+        items: [{
+          menu: item.id,
+          quantity: quantity,
+        }]
+      };
+
+      let updatedCart;
+      if (!cart) {
+        updatedCart = await cartService.createCart(cartData);
+      } else {
+        updatedCart = await cartService.updateCart(cart.id, cartData);
+      }
+      setCart(updatedCart);
+    } catch (error) {
+      console.error('Error updating cart:', error);
+      throw error;
+    }
+  };
+
+  const handleRemoveFromCart = async (itemId) => {
+    if (!user) return;
+    try {
+      if (!cart) return;
+      const updatedCart = await cartService.deleteItemCart(cart.id, itemId);
+      setCart(updatedCart);
+    } catch (error) {
+      console.error('Error removing item from cart:', error);
+      throw error;
+    }
+  };
+
+  const handleCheckout = () => {
+    if (!user) {
+      navigation.navigate('Login');
+      return;
+    }
+    navigation.navigate("Checkout", {
+      restaurantId,
+      isDineIn
+    });
   };
 
   const scrollHandler = useAnimatedScrollHandler((event) => {
@@ -134,13 +194,6 @@ export default function DetailScreen({ route, navigation }) {
     navigation.goBack();
   };
 
-  const handleCheckout = () => {
-    navigation.navigate("Checkout", {
-      restaurantId,
-      isDineIn
-    });
-  };
-
   const handleImageViewerClose = () => {
     setImageViewerVisible(false);
   };
@@ -153,40 +206,6 @@ export default function DetailScreen({ route, navigation }) {
       onAddToCart: handleAddToCart,
       onRemoveFromCart: handleRemoveFromCart
     });
-  };
-
-  const handleAddToCart = async (item, quantity) => {
-    try {
-      const cartData = {
-        restaurant: restaurantId,
-        items: [{
-          menu: item.id,
-          quantity: quantity,
-        }]
-      };
-
-      let updatedCart;
-      if (!cart) {
-        updatedCart = await cartService.createCart(cartData);
-      } else {
-        updatedCart = await cartService.updateCart(cart.id, cartData);
-      }
-      setCart(updatedCart);
-    } catch (error) {
-      console.error('Error updating cart:', error);
-      throw error;
-    }
-  };
-
-  const handleRemoveFromCart = async (itemId) => {
-    try {
-      if (!cart) return;
-      const updatedCart = await cartService.deleteItemCart(cart.id, itemId);
-      setCart(updatedCart);
-    } catch (error) {
-      console.error('Error removing item from cart:', error);
-      throw error;
-    }
   };
 
   if (loading) {
