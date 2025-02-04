@@ -167,35 +167,6 @@ export default function App() {
       try {
         // Initialize user state from storage
         await initializeAuth();
-        
-        // Register for push notifications if user is logged in
-        if (useUserStore.getState().user) {
-          const token = await registerForPushNotificationsAsync();
-          if (token) {
-            await authService.updateUser({
-              profile: { notification_token: token }
-            });
-          }
-        }
-
-        // Setup notification listeners
-        const subscription = setupNotificationListeners(
-          (notification) => {
-            // Handle received notification while app is foregrounded
-            console.log('Notification received:', notification);
-          },
-          (response) => {
-            // Handle notification response (user tapped notification)
-            console.log('Notification response:', response);
-          }
-        );
-
-        return () => {
-          // Cleanup notification subscription when component unmounts
-          if (subscription) {
-            subscription.remove();
-          }
-        };
       } catch (error) {
         console.error('Error initializing app:', error);
       } finally {
@@ -205,6 +176,25 @@ export default function App() {
 
     initApp();
   }, [initializeAuth]);
+
+  useEffect(() => {
+    const registerNotifications = async () => {
+      if (user) {
+        try {
+          const token = await registerForPushNotificationsAsync();
+          if (token) {
+            await authService.updateUser({
+              profile: { notification_token: token }
+            });
+          }
+        } catch (error) {
+          console.error('Error registering notifications:', error);
+        }
+      }
+    };
+
+    registerNotifications();
+  }, [user]);
 
   useEffect(() => {
     const handleLogout = async () => {
@@ -219,6 +209,27 @@ export default function App() {
       // Cleanup
     };
   }, [clearUser]);
+
+  useEffect(() => {
+    // Setup notification listeners
+    const subscription = setupNotificationListeners(
+      (notification) => {
+        // Handle received notification while app is foregrounded
+        console.log('Notification received:', notification);
+      },
+      (response) => {
+        // Handle notification response (user tapped notification)
+        console.log('Notification response:', response);
+      }
+    );
+
+    return () => {
+      // Cleanup notification subscription when component unmounts
+      if (subscription) {
+        subscription.remove();
+      }
+    };
+  }, []);
 
   if (isLoading) {
     return (
