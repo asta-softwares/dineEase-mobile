@@ -304,7 +304,7 @@ export default function DetailScreen({ route, navigation }) {
                         <View style={styles.promoContent}>
                           <View style={styles.discountContainer}>
                             <Text style={styles.discountText}>
-                            <Ionicons name='pricetag'   size={16} />
+                            <Ionicons name='pricetag'   size={12} />
                               {promo.discount_type === 'percentage' 
                                 ? `${promo.discount}% OFF`
                                 : `$${promo.discount} OFF`}
@@ -568,8 +568,7 @@ const styles = StyleSheet.create({
   },
   discountText: {
     color: colors.success,
-    fontFamily: 'PlusJakartaSans-Bold',
-    fontSize: 16,
+    ...typography.bodySmall,
   },
   promoTitle: {
     ...typography.bodySmall,

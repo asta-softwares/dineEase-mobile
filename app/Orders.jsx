@@ -167,7 +167,7 @@ const OrdersScreen = ({ navigation }) => {
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="receipt-outline" size={64} color={colors.text.secondary} />
-      <Text style={[typography.h3, styles.emptyText]}>No orders yet</Text>
+      <Text style={[typography.h3, styles.emptyText ]}>No orders yet</Text>
       <Text style={[typography.bodyMedium, styles.emptySubtext]}>
         Your order history will appear here
       </Text>
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     paddingTop: 64,
   },
   emptyText: {
-    color: colors.text.secondary,
+    color: colors.text.primary,
     marginTop: 16,
   },
   emptySubtext: {
