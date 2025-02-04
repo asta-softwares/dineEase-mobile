@@ -87,6 +87,7 @@ const CheckoutScreen = ({ route, navigation }) => {
   const [selectedPromos, setSelectedPromos] = useState([]);
   const [showPromoDropdown, setShowPromoDropdown] = useState(false);
   const [isDineIn, setIsDineIn] = useState(initialIsDineIn);
+  const [error, setError] = useState(null);
   const { initPaymentSheet, presentPaymentSheet, retrievePaymentIntent } = useStripe();
 
   const getTotalCost = () => {
@@ -107,16 +108,21 @@ const CheckoutScreen = ({ route, navigation }) => {
       
       // Load cart with restaurant owner ID
       const cartData = await cartService.getUserCart();
-      if (cartData) {
+      if (cartData && cartData.items && cartData.items.length > 0) {
         setCart({
           ...cartData,
           owner_id: restaurantData.owner
         });
+      } else {
+        setCart(null); // Set cart to null for empty state
       }
     } catch (error) {
-      console.error('Error loading data:', error);
-      Alert.alert('Error', 'Failed to load cart or restaurant data');
-      navigation.goBack();
+      console.error('Error loading cart and restaurant:', error);
+      setError(error.message);
+      if (error?.message !== "Not found.") {
+        Alert.alert('Error', 'Failed to load cart or restaurant data');
+        navigation.goBack();
+      }
     } finally {
       setInitialLoading(false);
     }
@@ -317,21 +323,17 @@ const CheckoutScreen = ({ route, navigation }) => {
     }
   };
 
-  if (initialLoading) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <TopNav 
-          handleGoBack={() => navigation.goBack()} 
-          title="Cart" 
-          variant="solid"
-          showBack={true}
-        />
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
+  const renderEmpty = () => (
+    <View style={styles.emptyContainer}>
+      <Ionicons name="cart-outline" size={64} color={colors.text.secondary} />
+      <Text style={[typography.h3, styles.emptyText]}>Your cart is empty</Text>
+      <Text style={[typography.bodyMedium, styles.emptySubtext]}>
+        Add items from a restaurant to start your order
+      </Text>
+    </View>
+  );
 
-  if (!cart || cart.items.length === 0) {
+  if (initialLoading) {
     return (
       <View style={styles.container}>
         <TopNav 
@@ -340,11 +342,23 @@ const CheckoutScreen = ({ route, navigation }) => {
           variant="solid"
           showBack={true}
         />
-        <View style={styles.emptyCart}>
-          <Text style={[typography.h3, { color: colors.text.secondary }]}>
-            Your cart is empty
-          </Text>
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
+      </View>
+    );
+  }
+
+  if (!cart || !cart.items || cart.items.length === 0) {
+    return (
+      <View style={styles.container}>
+        <TopNav 
+          handleGoBack={() => navigation.goBack()} 
+          title="Cart" 
+          variant="solid"
+          showBack={true}
+        />
+        {renderEmpty()}
       </View>
     );
   }
@@ -684,14 +698,21 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
   },
-  emptyCart: {
+  emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 24,
+    marginTop: Platform.OS === 'ios' ? 180 : 180,
   },
-  centerContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
+  emptyText: {
+    color: colors.text.primary,
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  emptySubtext: {
+    color: colors.text.secondary,
+    marginTop: 8,
+    textAlign: 'center',
   },
   tabContainer: {
     flexDirection: 'row',
@@ -730,6 +751,12 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     color: colors.primary,
     textDecorationLine: 'underline',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: Platform.OS === 'ios' ? 120 : 120,
   },
 });
 
