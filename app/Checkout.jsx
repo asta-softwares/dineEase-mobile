@@ -211,7 +211,7 @@ const CheckoutScreen = ({ route, navigation }) => {
         amount: orderTotals.total.toFixed(2),
         restaurant_id: restaurantId,
         menu_items: cart.items.map(item => ({
-          menu_item_id: item.id,
+          menu_item_id: item.menu,
           quantity: item.quantity,
         })),
         promo_ids: selectedPromos.map(promo => promo.id),
