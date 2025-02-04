@@ -21,6 +21,8 @@ const getStatusType = (status) => {
       return 'cancelled';
     case 'rejected':
       return 'rejected';
+    case 'completed':
+      return 'completed';
     default:
       return 'pending';
   }
