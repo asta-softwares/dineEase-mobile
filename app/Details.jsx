@@ -130,7 +130,15 @@ export default function DetailScreen({ route, navigation }) {
       if (!cart) {
         updatedCart = await cartService.createCart(cartData);
       } else {
-        updatedCart = await cartService.updateCart(cart.id, cartData);
+        try {
+          updatedCart = await cartService.updateCart(cart.id, cartData);
+        } catch (error) {
+          if (error?.message === "Not found.") {
+            updatedCart = await cartService.createCart(cartData);
+          } else {
+            throw error;
+          }
+        }
       }
       setCart(updatedCart);
     } catch (error) {
@@ -139,12 +147,25 @@ export default function DetailScreen({ route, navigation }) {
     }
   };
 
+  const fetchCart = async () => {
+    if (!user) {
+      setCart(null);
+      return;
+    }
+    try {
+      const cartData = await cartService.getUserCart();
+      setCart(cartData);
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+    }
+  };
+
   const handleRemoveFromCart = async (itemId) => {
     if (!user) return;
     try {
       if (!cart) return;
-      const updatedCart = await cartService.deleteItemCart(cart.id, itemId);
-      setCart(updatedCart);
+      await cartService.deleteItemCart(cart.id, itemId);
+      await fetchCart();
     } catch (error) {
       console.error('Error removing item from cart:', error);
       throw error;

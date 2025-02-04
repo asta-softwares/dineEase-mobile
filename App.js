@@ -25,7 +25,6 @@ import EditProfileScreen from './app/EditProfile';
 import RegisterScreen from './app/Register';
 import VerifyEmailScreen from './app/VerifyEmail';
 import { colors } from './styles/colors';
-import { CartProvider } from './context/CartContext';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import OrderDetailScreen from './app/OrderDetail';
 import OrdersScreen from './app/Orders';
@@ -246,7 +245,6 @@ export default function App() {
         publishableKey={stripePublishableKey}
         merchantIdentifier={merchantIdentifier}
       >
-        <CartProvider>
           <NavigationContainer ref={navigationRef}>
             <Stack.Navigator
               screenOptions={{
@@ -335,7 +333,6 @@ export default function App() {
               />
             </Stack.Navigator>
           </NavigationContainer>
-        </CartProvider>
       </StripeProvider>
     </GestureHandlerRootView>
   );

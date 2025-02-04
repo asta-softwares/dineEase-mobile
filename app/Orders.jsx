@@ -27,7 +27,7 @@ const getStatusType = (status) => {
       return 'pending';
   }
 };
-
+ 
 const getOrderTypeIcon = (type) => {
   switch (type?.toLowerCase()) {
     case 'dine_in':
