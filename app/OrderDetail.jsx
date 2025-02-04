@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text, ScrollView, ActivityIndicator, Platform } from 'react-native';
+import { View, StyleSheet, Text, ScrollView, ActivityIndicator, Platform, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import TopNav from '../Components/TopNav';
 import Footer from './Layout/Footer';
 import { colors } from '../styles/colors';
@@ -51,6 +52,31 @@ const OrderDetailScreen = ({ route, navigation }) => {
   const { order, restaurant, fromCheckout } = route.params;
   const [orderDetails, setOrderDetails] = useState(null);
   const [loading, setLoading] = useState(true);
+  const isFromOrders = !fromCheckout;
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!isFromOrders) {
+        const onBackPress = () => {
+          return true; 
+        };
+
+        BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+        return () => {
+          BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+        };
+      }
+    }, [isFromOrders])
+  );
+
+  useEffect(() => {
+    if (!isFromOrders) {
+      navigation.setOptions({
+        gestureEnabled: false
+      });
+    }
+  }, [isFromOrders, navigation]);
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -149,8 +175,6 @@ const OrderDetailScreen = ({ route, navigation }) => {
       </View>
     );
   };
-
-  const isFromOrders = !fromCheckout;
 
   if (loading) {
     return (
