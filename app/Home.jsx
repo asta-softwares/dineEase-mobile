@@ -355,7 +355,7 @@ export default function HomeScreen({ navigation }) {
              
               <View style={styles.logoContainer}>
                 <Image
-                  source={require("../assets/logo-and-text-orange.png")}
+                  source={require("../assets/logo-splashscreen.png")}
                   style={styles.logo}
                 />
               </View>
@@ -372,7 +372,7 @@ export default function HomeScreen({ navigation }) {
                 <Ionicons 
                   name="bag-outline" 
                   size={24} 
-                  color={colors.text.black} 
+                  color={colors.text.white} 
                   opacity={user ? 1 : 0}
                 />
                 {hasCartItems && (
@@ -413,7 +413,7 @@ export default function HomeScreen({ navigation }) {
                   <Ionicons 
                     name="restaurant-outline" 
                     size={20} 
-                    color={isDineIn ? colors.white : colors.text.primary} 
+                    color={isDineIn ? colors.primary : colors.text.white} 
                     style={styles.switchButtonIcon}
                   />
                   <Text style={[styles.switchText, isDineIn && styles.activeText]}>
@@ -432,7 +432,7 @@ export default function HomeScreen({ navigation }) {
                   <Ionicons 
                     name="bag-handle-outline" 
                     size={20} 
-                    color={!isDineIn ? colors.white : colors.text.primary} 
+                    color={!isDineIn ? colors.primary : colors.text.white} 
                     style={styles.switchButtonIcon}
                   />
                   <Text style={[styles.switchText, !isDineIn && styles.activeText]}>
@@ -483,7 +483,7 @@ export default function HomeScreen({ navigation }) {
                   marginHorizontal: layout.spacing.md,
                   marginBottom: layout.spacing.sm
                 }]}>
-                  Explore Cuisines
+                  Explore Cravings
                 </Text>
                 <ScrollView
                   horizontal
@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
     paddingTop: Platform.OS === 'android' ? 50 : 0,
     overflow: 'hidden',
-    backgroundColor: colors.white,
+    backgroundColor: colors.primary,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.text.primary,
+    borderColor: colors.white,
   },
   switchButtonContent: {
     flexDirection: 'row',
@@ -659,16 +659,16 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   activeButton: {
-    backgroundColor: colors.text.primary,
+    backgroundColor: colors.white,
     borderWidth: 0,
   },
   switchText: {
     fontFamily: 'PlusJakartaSans-Medium',
     fontSize: 14,
-    color: colors.text.primary,
+    color: colors.white,
   },
   activeText: {
-    color: colors.white,
+    color: colors.primary,
   },
   cuisinesContainer: {
     paddingLeft: layout.spacing.md,
