@@ -76,7 +76,11 @@ export default function DetailScreen({ route, navigation }) {
       }
       try {
         const cartData = await cartService.getUserCart();
-        setCart(cartData);
+        if (cartData && cartData.restaurant === restaurantId) {
+          setCart(cartData);
+        } else {
+          setCart(null);
+        }
       } catch (error) {
         console.error('Error fetching cart:', error);
       }
