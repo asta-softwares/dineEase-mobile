@@ -320,21 +320,89 @@ const authService = {
 
   toggleFavorite: async (type, id) => {
     try {
-      const payload = type === 'restaurant'
-        ? { restaurant: id }
-        : { menu: id };
-      
-      let response;
-      if (id) {
-        response = await apiClient.post(`/favorites/${id}/remove/`, payload);
-      } else {
-        response = await apiClient.post('/favorites/', payload);
-      }
+      const authToken = useUserStore.getState().authToken;
+      const response = await apiClient.post('/toggle-favorite/', {
+        type,
+        id
+      }, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
       return response.data;
     } catch (error) {
-      throw this.handleError(error);
+      console.error('Toggle favorite error:', error);
+      throw error;
     }
   },
+  
+  findAccount: async (identifier) => {
+    try {
+      const response = await apiClient.post('/find-account/', {
+        identifier
+      });
+  
+      return response.data;
+    } catch (error) {
+      console.log('Find account error:', {
+        data: error?.response?.data,
+        status: error?.response?.status,
+        detail: error?.response?.data?.detail
+      });
+      
+      if (error?.response?.data?.detail) {
+        throw new Error(error.response.data.detail);
+      }
+      
+      throw new Error(error?.message || 'An error occurred while finding your account');
+    }
+  },
+  
+  resetPassword: async (identifier, code, newPassword) => {
+    try {
+      const response = await apiClient.post('/forgot-password/', {
+        identifier, // Using email returned from findAccount
+        code,
+        new_password: newPassword,
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.log('Reset password error:', {
+        data: error?.response?.data,
+        status: error?.response?.status,
+        detail: error?.response?.data?.detail,
+      });
+      
+      if (error?.response?.data?.detail) {
+        throw new Error(error.response.data.detail);
+      }
+      
+      throw new Error(error?.message || 'An error occurred while resetting your password');
+    }
+  },
+  
+  resendResetCode: async (identifier) => {
+    try {
+      const response = await apiClient.post('/resend-reset-code/', {
+        identifier // Using email returned from findAccount
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.log('Resend reset code error:', {
+        data: error?.response?.data,
+        status: error?.response?.status,
+        detail: error?.response?.data?.detail
+      });
+      
+      if (error?.response?.data?.detail) {
+        throw new Error(error.response.data.detail);
+      }
+      
+      throw new Error(error?.message || 'An error occurred while resending the reset code');
+    }
+  }
 };
 
 export default authService;

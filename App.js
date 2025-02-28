@@ -38,6 +38,9 @@ import RestaurantInfo from './app/RestaurantInfo';
 import { Ionicons } from '@expo/vector-icons';
 import { setNavigationRef } from './api/client';
 import Favorites from './app/Favorites';
+import ForgotPasswordScreen from './app/ForgotPassword';
+import ResetPasswordScreen from './app/ResetPassword';
+
 // Initialize reanimated
 import 'react-native-reanimated';
 
@@ -274,6 +277,20 @@ export default function App() {
                   <Stack.Screen 
                     name="VerifyEmail" 
                     component={VerifyEmailScreen}
+                    options={{
+                      gestureEnabled: false
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="ForgotPassword" 
+                    component={ForgotPasswordScreen}
+                    options={{
+                      gestureEnabled: false
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="ResetPassword" 
+                    component={ResetPasswordScreen}
                     options={{
                       gestureEnabled: false
                     }}
