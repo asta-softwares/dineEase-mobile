@@ -528,9 +528,6 @@ const CheckoutScreen = ({ route, navigation }) => {
               {orderTotals.discount > 0 && (
                 <TotalRow label="Discount" value={orderTotals.discount} type="discount" />
               )}
-               {orderTotals.tax_rate > 0 && (
-              <TotalRow label="Tax Rate" value={orderTotals.tax_rate} type="percentage" />
-              )}
              {orderTotals.tax_amount > 0 && (
               <TotalRow label="Tax Amount" value={orderTotals.tax_amount} />
               )}

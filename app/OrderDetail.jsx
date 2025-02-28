@@ -270,7 +270,6 @@ const OrderDetailScreen = ({ route, navigation }) => {
           <View style={styles.divider} />
           <TotalRow label="Subtotal" value={orderDetails?.order_total} />
           {orderDetails?.discount > 0 && <TotalRow label="Discount" value={orderDetails.discount} />}
-          {orderDetails?.tax_rate > 0 && <TotalRow label="Tax Rate" type="percentage" value={orderDetails.tax_rate} />}
           {orderDetails?.tax_amount > 0 && <TotalRow label="Tax Amount" value={orderDetails.tax_amount} />}
           {orderDetails?.service_fee > 0 && <TotalRow label="Service Fee" value={orderDetails.service_fee} />}
           {orderDetails?.service_fee_tax > 0 && <TotalRow label="Service Fee Tax" value={orderDetails.service_fee_tax} />}
