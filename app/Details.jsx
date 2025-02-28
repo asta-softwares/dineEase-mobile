@@ -108,7 +108,11 @@ export default function DetailScreen({ route, navigation }) {
     try {
       const newFavoriteStatus = !isFavorite;
       setIsFavorite(newFavoriteStatus); 
-      await authService.toggleFavorite('restaurant', restaurantId);
+      if (newFavoriteStatus) {
+        await authService.addFavorite(restaurantId);
+      } else {
+        await authService.deleteFavoriteById(restaurant.is_favorite);
+      }
     } catch (error) {
       setIsFavorite(!isFavorite); 
       Alert.alert('Error', 'Failed to update favorite status');

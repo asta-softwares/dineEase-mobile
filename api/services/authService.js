@@ -318,12 +318,11 @@ const authService = {
     }
   },
 
-  toggleFavorite: async (type, id) => {
+  addFavorite: async (id) => {
     try {
       const authToken = useUserStore.getState().authToken;
-      const response = await apiClient.post('/toggle-favorite/', {
-        type,
-        id
+      const response = await apiClient.post('/favorites/', {
+        restaurant: id
       }, {
         headers: {
           Authorization: `Bearer ${authToken}`,
@@ -331,11 +330,26 @@ const authService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Toggle favorite error:', error);
+      console.error('Add favorite error:', error);
       throw error;
     }
   },
-  
+
+  deleteFavoriteById: async (favoriteId) => {
+    try {
+      const authToken = useUserStore.getState().authToken;
+      const response = await apiClient.delete(`/favorites/${favoriteId}/remove/`, {}, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Delete favorite error:', error);
+      throw error;
+    }
+  },
+
   findAccount: async (identifier) => {
     try {
       const response = await apiClient.post('/find-account/', {
