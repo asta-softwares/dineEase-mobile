@@ -402,6 +402,28 @@ const authService = {
       
       throw new Error(error?.message || 'An error occurred while resending the reset code');
     }
+  },
+  
+  resendCode: async (email) => {
+    try {
+      const response = await apiClient.post('/resend-code/', {
+        email 
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.log('Resend code error:', {
+        data: error?.response?.data,
+        status: error?.response?.status,
+        detail: error?.response?.data?.detail
+      });
+      
+      if (error?.response?.data?.detail) {
+        throw new Error(error.response.data.detail);
+      }
+      
+      throw new Error(error?.message || 'An error occurred while resending the verification code');
+    }
   }
 };
 

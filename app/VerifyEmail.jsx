@@ -94,6 +94,33 @@ export default function VerifyEmailScreen({ navigation, route }) {
     }
   };
 
+  const handleResendCode = async () => {
+    if (!email) {
+      Alert.alert('Error', 'Email address is missing. Please try again from the login screen.');
+      navigation.replace('Login');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await authService.resendCode(email);
+      
+      Alert.alert(
+        'Code Sent',
+        `A new verification code has been sent to ${email}`
+      );
+    } catch (error) {
+      console.error('Resend code error:', error);
+      
+      Alert.alert(
+        'Failed to Resend Code',
+        error.message || 'An error occurred while sending a new code'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
        <StatusBar
@@ -136,6 +163,14 @@ export default function VerifyEmailScreen({ navigation, route }) {
                     autoCapitalize="none"
                     keyboardType="number-pad"
                   />
+                </View>
+
+                <View style={styles.resendCodeContainer}>
+                  <TouchableOpacity onPress={handleResendCode} disabled={loading}>
+                    <Text style={styles.resendCodeText}>
+                      Didn't receive the code? Resend
+                    </Text>
+                  </TouchableOpacity>
                 </View>
 
                 <View style={styles.buttonContainer}>
@@ -201,5 +236,14 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 10,
+  },
+  resendCodeContainer: {
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  resendCodeText: {
+    ...typography.labelMedium,
+    color: colors.text.primary,
+    textDecorationLine: 'underline',
   },
 });
